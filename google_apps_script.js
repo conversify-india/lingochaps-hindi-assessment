@@ -75,17 +75,62 @@ function writeToSheet(data) {
     detail = ss.insertSheet('Row Details');
     detail.appendRow([
       'Candidate Name', 'Submitted At', 'Timestamp (Segment)',
-      'Candidate Comment', 'Score', 'Max Score', 'Percentage'
+      'Candidate WfW', 'Candidate OST', 'Candidate Notes', 'Candidate Comment',
+      'OST Image URLs', 'Score', 'Max Score', 'Percentage'
     ]);
-    detail.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#6aa84f').setFontColor('#ffffff');
+    detail.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground('#6aa84f').setFontColor('#ffffff');
   }
+
+  // Set up Drive Folder for images if any images exist
+  let folder = null;
+  const hasAnyImages = data.rows && data.rows.some(row => row.ostImages && row.ostImages.length > 0);
+  if (hasAnyImages) {
+    try {
+      const folders = DriveApp.getFoldersByName('LingoChaps_Hindi_Assessment_Images');
+      if (folders.hasNext()) {
+        folder = folders.next();
+      } else {
+        folder = DriveApp.createFolder('LingoChaps_Hindi_Assessment_Images');
+      }
+    } catch (fErr) {
+      Logger.log('Drive folder access failed: ' + fErr.message);
+    }
+  }
+
   if (data.rows && Array.isArray(data.rows)) {
-    data.rows.forEach(row => {
+    data.rows.forEach((row, rIdx) => {
+      // Save images to Google Drive and compile URLs
+      let imageUrls = [];
+      if (row.ostImages && Array.isArray(row.ostImages) && folder) {
+        row.ostImages.forEach((img, iIdx) => {
+          try {
+            const dataUrl = img.dataUrl;
+            if (dataUrl && dataUrl.indexOf(',') !== -1) {
+              const contentType = dataUrl.substring(5, dataUrl.indexOf(';'));
+              const base64Data = dataUrl.substring(dataUrl.indexOf(',') + 1);
+              const decoded = Utilities.base64Decode(base64Data);
+              const fileName = `${data.name}_row_${rIdx + 1}_img_${iIdx + 1}_${img.name || 'screenshot.jpg'}`;
+              const blob = Utilities.newBlob(decoded, contentType, fileName);
+              const file = folder.createFile(blob);
+              file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+              imageUrls.push(file.getUrl());
+            }
+          } catch (imgErr) {
+            Logger.log('Error saving image: ' + imgErr.message);
+            imageUrls.push(`(Error: ${imgErr.message})`);
+          }
+        });
+      }
+
       detail.appendRow([
         data.name,
         data.submittedAt,
         row.timestamp,
+        row.wfwText || '',
+        row.ostText || '',
+        row.notesText || '',
         row.comment || '(no comment)',
+        imageUrls.join(', '),
         row.score,
         row.max,
         Math.round((row.score / row.max) * 100) + '%'

@@ -548,6 +548,267 @@
       text-transform: uppercase;
       letter-spacing: .5px;
     }
+
+    /* ─── GOOGLE SHEETS STYLE GRID ─── */
+    .grid-info-banner {
+      background: rgba(79, 70, 229, 0.05);
+      border: 1px solid rgba(79, 70, 229, 0.2);
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    table {
+      table-layout: fixed;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid var(--border) !important;
+      position: relative;
+    }
+    td.grid-cell {
+      padding: 0 !important;
+      vertical-align: top;
+      transition: background 0.1s;
+    }
+    td.grid-cell:hover {
+      background: rgba(79, 70, 229, 0.02);
+    }
+    .cell-content-wrapper {
+      padding: 12px;
+      min-height: 80px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    td.selected-cell {
+      outline: 2px solid var(--accent) !important;
+      outline-offset: -2px;
+      z-index: 10;
+      background: rgba(79, 70, 229, 0.01);
+    }
+    .cell-editor {
+      width: 100%;
+      height: 100%;
+      min-height: 80px;
+      border: none;
+      outline: none;
+      padding: 12px;
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: none;
+      display: block;
+    }
+    .cell-images-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .cell-image-thumb-wrapper {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .cell-image-thumb-wrapper:hover {
+      transform: scale(1.05);
+      border-color: var(--accent);
+    }
+    .cell-image-thumb-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .cell-image-delete-btn {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 16px;
+      height: 16px;
+      background: rgba(15, 23, 42, 0.8);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      line-height: 1;
+      font-weight: bold;
+    }
+    .cell-image-delete-btn:hover {
+      background: var(--red);
+    }
+    .cell-image-edit-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(15, 23, 42, 0.75);
+      color: #fff;
+      font-size: 8px;
+      text-align: center;
+      padding: 2px 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .cell-image-thumb-wrapper:hover .cell-image-edit-overlay {
+      opacity: 1;
+    }
+    .cell-add-image-btn {
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      align-self: flex-start;
+      margin-top: 6px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      transition: background 0.15s, color 0.15s;
+    }
+    .cell-add-image-btn:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    /* ─── MODAL ─── */
+    .modal {
+      display: none;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal.open { display: flex; }
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%; max-width: 800px;
+      max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+      animation: modalFadeIn 0.25s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 700; color: var(--text); }
+    .modal-close {
+      background: none; border: none; font-size: 24px; color: var(--muted);
+      cursor: pointer; line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+    
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 12px;
+    }
+    
+    .btn-secondary {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: var(--border); }
+    
+    .btn-primary {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fff;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+
+    .btn-danger {
+      background: rgba(185, 28, 28, 0.1);
+      border: 1px solid rgba(185, 28, 28, 0.2);
+      color: var(--red);
+      font-weight: 600;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-danger:hover { background: rgba(185, 28, 28, 0.2); }
+    
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 11px;
+      border-radius: 6px;
+    }
+    
+    .image-draw-area {
+      display: flex; flex-direction: column; flex: 1;
+    }
+    .canvas-container {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: auto;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      flex: 1;
+      min-height: 250px;
+    }
+    .canvas-container canvas {
+      max-width: 100%; max-height: 320px;
+      cursor: crosshair;
+      display: block;
+      background-position: center;
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
   </style>
 </head>
 <body>
@@ -640,14 +901,18 @@
         </div>
       </div>
 
+      <div class="grid-info-banner">
+        💡 <strong>Google Sheets Mode</strong>: Click any cell to select. Press <strong>Enter</strong> to edit (Shift+Enter for new line). Use <strong>Arrow keys / Tab</strong> to navigate. Paste images (Ctrl+V) directly into cells!
+      </div>
+
       <div class="table-wrapper">
         <table id="assessmentTable">
           <thead>
             <tr>
               <th>⏱ Timestamp</th>
-              <th>✍️ WfW Translation (Pre-filled)</th>
-              <th>🖥 OST (Pre-filled)</th>
-              <th>📎 Notes (Pre-filled)</th>
+              <th>✍️ WfW Translation</th>
+              <th>🖥 OST</th>
+              <th>📎 Notes</th>
               <th>💬 Your Comments</th>
             </tr>
           </thead>
@@ -695,6 +960,36 @@
       <p>Your score will be automatically logged with your name, timestamp, and row-by-row details.</p>
       <button class="btn-sheet" onclick="sendToSheet()">Send to Google Sheets →</button>
       <div id="sheetStatus"></div>
+    </div>
+  </div>
+<!-- ─── IMAGE ANNOTATION MODAL ─── -->
+<div id="ostModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>🎨 Image Annotator & Editor — <span id="modalSegmentTitle">—</span></h3>
+      <button class="modal-close" onclick="closeOstEditor(false)">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="image-draw-area">
+        <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size:13px; font-weight:700;" id="imageEditorFilename">Image Preview</span>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-secondary btn-sm" onclick="rotateCurrentImage()">🔄 Rotate 90°</button>
+            <button type="button" class="btn-danger btn-sm" onclick="deleteCurrentImage()">🗑️ Delete</button>
+          </div>
+        </div>
+        <div class="canvas-container" id="canvasContainer">
+          <canvas id="annotationCanvas"></canvas>
+        </div>
+        <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+          <span style="font-size: 11px; color: var(--muted);">Click and drag on the image to draw annotations/highlights (red lines)</span>
+          <button type="button" class="btn-secondary btn-sm" onclick="clearCanvasAnnotations()" style="margin-left: auto;">🧹 Clear Drawing</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeOstEditor(false)">Close</button>
+      <button class="btn-primary" onclick="saveOstData()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -999,6 +1294,24 @@ let elapsedSeconds = 0;
 let testStartTime = null;
 let submitted = false;
 
+// Google Sheets Grid State
+let gridData = WORK_DATA.map((row) => ({
+  timestamp: row.timestamp,
+  wfw: { text: row.wfw, images: [] },
+  ost: { text: row.ost || "", images: [] },
+  notes: { text: row.notes || "", images: [] },
+  comment: { text: "", images: [] }
+}));
+
+let selectedCell = { row: 0, col: 1 };
+let editingCell = null;
+let annotatingImageInfo = null; 
+let isDrawingActive = false;
+let currentLine = null;
+let annotationCanvas = null;
+let annotationCtx = null;
+let canvasImageElement = null;
+
 // ─────────────────────────────────────────────
 // START TEST
 // ─────────────────────────────────────────────
@@ -1024,202 +1337,715 @@ function startTest() {
 function buildTable() {
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = '';
-  WORK_DATA.forEach((row, i) => {
+  gridData.forEach((row, rIdx) => {
     const tr = document.createElement('tr');
-    tr.id = `row_${i}`;
-    tr.innerHTML = `
-      <td class="ts-cell">${escHtml(row.timestamp)}</td>
-      <td class="wfw-cell">${escHtml(row.wfw)}</td>
-      <td class="ost-cell">${row.ost ? escHtml(row.ost) : '<span style="color:var(--border);font-style:italic">—</span>'}</td>
-      <td class="notes-cell">${row.notes ? escHtml(row.notes) : '<span style="color:var(--border);font-style:italic">—</span>'}</td>
-      <td class="comment-cell" id="cc_${i}">
-        <textarea id="comment_${i}" placeholder="Write your observations here… (leave blank if all correct)"
-          oninput="onCommentChange(${i})"></textarea>
-        <div class="row-status empty" id="status_${i}">No comment</div>
-      </td>
-    `;
+    tr.id = `row_${rIdx}`;
+    
+    const tdTs = document.createElement('td');
+    tdTs.className = 'ts-cell grid-cell';
+    tdTs.id = `cell_${rIdx}_0`;
+    tdTs.onclick = (e) => handleCellClick(rIdx, 0, e);
+    tdTs.innerHTML = `<div class="cell-content-wrapper" style="font-variant-numeric: tabular-nums;">${escHtml(row.timestamp)}</div>`;
+    tr.appendChild(tdTs);
+    
+    tr.appendChild(createGridCell(rIdx, 1, row.wfw));
+    tr.appendChild(createGridCell(rIdx, 2, row.ost));
+    tr.appendChild(createGridCell(rIdx, 3, row.notes));
+    tr.appendChild(createGridCell(rIdx, 4, row.comment));
+    
     tbody.appendChild(tr);
   });
+  updateSelectionVisuals();
+}
+
+function createGridCell(rIdx, cIdx, cellData) {
+  const td = document.createElement('td');
+  td.className = 'grid-cell';
+  td.id = `cell_${rIdx}_${cIdx}`;
+  td.onclick = (e) => handleCellClick(rIdx, cIdx, e);
+  td.ondblclick = () => startEditing(rIdx, cIdx);
+  
+  updateCellHtml(td, rIdx, cIdx, cellData);
+  return td;
+}
+
+function updateCellHtml(td, rIdx, cIdx, cellData) {
+  if (editingCell && editingCell.row === rIdx && editingCell.col === cIdx) {
+    td.innerHTML = `<textarea id="editor_${rIdx}_${cIdx}" class="cell-editor">${cellData.text}</textarea>`;
+    const textarea = td.querySelector('textarea');
+    textarea.focus();
+    textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+    
+    textarea.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { 
+        e.preventDefault(); 
+        saveAndMove(1, 0); 
+      }
+      else if (e.key === 'Tab') { 
+        e.preventDefault(); 
+        saveAndMove(0, e.shiftKey ? -1 : 1); 
+      }
+      else if (e.key === 'Escape') { 
+        e.preventDefault(); 
+        cancelEditing(); 
+      }
+    });
+    textarea.addEventListener('blur', () => { saveEditing(); });
+    return;
+  }
+  
+  let imagesHtml = '';
+  if (cellData.images && cellData.images.length > 0) {
+    imagesHtml = `<div class="cell-images-container">`;
+    cellData.images.forEach((img, imgIdx) => {
+      imagesHtml += `
+        <div class="cell-image-thumb-wrapper" onclick="openImageAnnotation(${rIdx}, ${cIdx}, ${imgIdx}, event)">
+          <img src="${img.dataUrl}" />
+          <button type="button" class="cell-image-delete-btn" onclick="deleteCellImage(${rIdx}, ${cIdx}, ${imgIdx}, event)">&times;</button>
+          <div class="cell-image-edit-overlay">✏️ Edit</div>
+        </div>`;
+    });
+    imagesHtml += `</div>`;
+  }
+  
+  td.innerHTML = `
+    <div class="cell-content-wrapper">
+      <div style="flex:1; white-space:pre-wrap; word-break:break-word; min-height:16px;">${cellData.text ? escHtml(cellData.text) : '<span style="color:var(--muted);opacity:0.3;font-style:italic">empty</span>'}</div>
+      ${imagesHtml}
+      <button type="button" class="cell-add-image-btn" onclick="triggerCellImageUpload(${rIdx}, ${cIdx}, event)">📷 Add Image</button>
+      <input type="file" id="upload_${rIdx}_${cIdx}" accept="image/*" style="display:none;" onchange="handleCellImageFile(this.files, ${rIdx}, ${cIdx})" />
+    </div>`;
+}
+
+function handleCellClick(row, col, e) {
+  if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.cell-image-thumb-wrapper')) return;
+  if (editingCell && (editingCell.row !== row || editingCell.col !== col)) saveEditing();
+  selectedCell = { row, col };
+  updateSelectionVisuals();
+  e.stopPropagation();
+}
+
+function updateSelectionVisuals() {
+  document.querySelectorAll('td.grid-cell').forEach(td => td.classList.remove('selected-cell'));
+  if (selectedCell) {
+    const activeCell = document.getElementById(`cell_${selectedCell.row}_${selectedCell.col}`);
+    if (activeCell) activeCell.classList.add('selected-cell');
+  }
+}
+
+function startEditing(row, col, initialChar = null) {
+  if (col === 0) return;
+  if (editingCell) saveEditing();
+  editingCell = { row, col };
+  const td = document.getElementById(`cell_${row}_${col}`);
+  if (td) {
+    const cellData = getCellData(row, col);
+    let val = cellData.text;
+    if (initialChar !== null) {
+      val = initialChar;
+    }
+    td.innerHTML = `<textarea id="editor_${row}_${col}" class="cell-editor">${val}</textarea>`;
+    const textarea = td.querySelector('textarea');
+    textarea.focus();
+    if (initialChar === null) {
+      textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+    } else {
+      textarea.selectionStart = textarea.selectionEnd = 1;
+    }
+    
+    textarea.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { 
+        e.preventDefault(); 
+        saveAndMove(1, 0); 
+      }
+      else if (e.key === 'Tab') { 
+        e.preventDefault(); 
+        saveAndMove(0, e.shiftKey ? -1 : 1); 
+      }
+      else if (e.key === 'Escape') { 
+        e.preventDefault(); 
+        cancelEditing(); 
+      }
+    });
+    textarea.addEventListener('blur', () => { saveEditing(); });
+  }
+}
+
+function saveEditing() {
+  if (!editingCell) return;
+  const { row, col } = editingCell;
+  const textarea = document.getElementById(`editor_${row}_${col}`);
+  if (textarea) {
+    getCellData(row, col).text = textarea.value;
+    if (col === 4) updateProgress();
+  }
+  editingCell = null;
+  const td = document.getElementById(`cell_${row}_${col}`);
+  if (td) updateCellHtml(td, row, col, getCellData(row, col));
+}
+
+function cancelEditing() {
+  if (!editingCell) return;
+  const { row, col } = editingCell;
+  editingCell = null;
+  const td = document.getElementById(`cell_${row}_${col}`);
+  if (td) updateCellHtml(td, row, col, getCellData(row, col));
+}
+
+function saveAndMove(dRow, dCol) {
+  saveEditing();
+  if (selectedCell) {
+    let newRow = selectedCell.row + dRow;
+    let newCol = selectedCell.col + dCol;
+    if (newRow >= 0 && newRow < 15 && newCol >= 0 && newCol < 5) {
+      selectedCell = { row: newRow, col: newCol };
+      updateSelectionVisuals();
+      const cell = document.getElementById(`cell_${newRow}_${newCol}`);
+      if (cell) {
+        cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+    }
+  }
+}
+
+function getCellData(row, col) {
+  const rowObj = gridData[row];
+  if (col === 1) return rowObj.wfw;
+  if (col === 2) return rowObj.ost;
+  if (col === 3) return rowObj.notes;
+  if (col === 4) return rowObj.comment;
+  return null;
+}
+
+function clearCellText(row, col) {
+  if (col === 0) return;
+  let cellData = getCellData(row, col);
+  cellData.text = "";
+  const td = document.getElementById(`cell_${row}_${col}`);
+  if (td) updateCellHtml(td, row, col, cellData);
+  if (col === 4) updateProgress();
 }
 
 function escHtml(str) {
   if (!str) return '';
-  return str
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/\n/g,'<br>');
-}
-
-function onCommentChange(i) {
-  const ta = document.getElementById(`comment_${i}`);
-  const cc = document.getElementById(`cc_${i}`);
-  const st = document.getElementById(`status_${i}`);
-  const hasText = ta.value.trim().length > 0;
-  if (hasText) {
-    cc.classList.add('answered');
-    st.textContent = 'Commented ✓';
-    st.className = 'row-status done';
-  } else {
-    cc.classList.remove('answered');
-    st.textContent = 'No comment';
-    st.className = 'row-status empty';
-  }
-  updateProgress();
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
 }
 
 function updateProgress() {
-  let count = 0;
-  WORK_DATA.forEach((_,i) => {
-    const ta = document.getElementById(`comment_${i}`);
-    if (ta && ta.value.trim()) count++;
-  });
-  const pct = Math.round((count / 15) * 100);
-  document.getElementById('progressFill').style.width = pct + '%';
+  let count = gridData.filter(r => r.comment.text && r.comment.text.trim()).length;
+  document.getElementById('progressFill').style.width = Math.round((count / 15) * 100) + '%';
   document.getElementById('progressText').textContent = `${count} / 15 commented`;
 }
 
 // ─────────────────────────────────────────────
-// TIMER
+// SPREADSHEET KEYBOARD NAVIGATION
+// ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (document.getElementById('splash').style.display !== 'none') return;
+  if (document.getElementById('results').style.display === 'block') return;
+
+  if (!editingCell) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      moveSelection(-1, 0);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      moveSelection(1, 0);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      moveSelection(0, -1);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      moveSelection(0, 1);
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      moveSelection(0, e.shiftKey ? -1 : 1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedCell && selectedCell.col > 0) {
+        startEditing(selectedCell.row, selectedCell.col);
+      }
+    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+      if (selectedCell && selectedCell.col > 0) {
+        e.preventDefault();
+        clearCellText(selectedCell.row, selectedCell.col);
+      }
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (selectedCell && selectedCell.col > 0) {
+        startEditing(selectedCell.row, selectedCell.col, e.key);
+      }
+    }
+  }
+});
+
+function moveSelection(dRow, dCol) {
+  if (selectedCell) {
+    let newRow = selectedCell.row + dRow;
+    let newCol = selectedCell.col + dCol;
+    if (newRow >= 0 && newRow < 15 && newCol >= 0 && newCol < 5) {
+      selectedCell = { row: newRow, col: newCol };
+      updateSelectionVisuals();
+      const cell = document.getElementById(`cell_${newRow}_${newCol}`);
+      if (cell) {
+        cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// IMAGE UPLOAD & RESIZING
+// ─────────────────────────────────────────────
+function triggerCellImageUpload(row, col, event) {
+  if (event) event.stopPropagation();
+  const input = document.getElementById(`upload_${row}_${col}`);
+  if (input) input.click();
+}
+
+function resizeAndCompressImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      const maxDim = 800;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      callback(compressedDataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleCellImageFile(files, row, col) {
+  if (!files || files.length === 0) return;
+  const file = files[0];
+  resizeAndCompressImage(file, (dataUrl) => {
+    const cellData = getCellData(row, col);
+    if (cellData) {
+      if (!cellData.images) cellData.images = [];
+      cellData.images.push({
+        name: file.name,
+        dataUrl: dataUrl,
+        rotation: 0,
+        drawings: []
+      });
+      const td = document.getElementById(`cell_${row}_${col}`);
+      if (td) updateCellHtml(td, row, col, cellData);
+    }
+  });
+}
+
+function deleteCellImage(row, col, imgIdx, event) {
+  if (event) event.stopPropagation();
+  const cellData = getCellData(row, col);
+  if (cellData && cellData.images) {
+    cellData.images.splice(imgIdx, 1);
+    const td = document.getElementById(`cell_${row}_${col}`);
+    if (td) updateCellHtml(td, row, col, cellData);
+  }
+}
+
+// ─────────────────────────────────────────────
+// COPY-PASTE & DRAG-AND-DROP IMAGE HANDLERS
+// ─────────────────────────────────────────────
+document.addEventListener('paste', e => {
+  const activeCell = editingCell || selectedCell;
+  if (activeCell) {
+    const items = (e.clipboardData || window.clipboardData).items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') === 0) {
+        e.preventDefault();
+        const file = items[i].getAsFile();
+        resizeAndCompressImage(file, (dataUrl) => {
+          const cellData = getCellData(activeCell.row, activeCell.col);
+          if (cellData) {
+            if (!cellData.images) cellData.images = [];
+            cellData.images.push({
+              name: 'pasted_image.jpg',
+              dataUrl: dataUrl,
+              rotation: 0,
+              drawings: []
+            });
+            if (editingCell) {
+              const textarea = document.getElementById(`editor_${editingCell.row}_${editingCell.col}`);
+              if (textarea) cellData.text = textarea.value;
+            }
+            const td = document.getElementById(`cell_${activeCell.row}_${activeCell.col}`);
+            if (td) {
+              updateCellHtml(td, activeCell.row, activeCell.col, cellData);
+            }
+          }
+        });
+        break;
+      }
+    }
+  }
+});
+
+document.addEventListener('dragover', e => {
+  const td = e.target.closest('td.grid-cell');
+  if (td) {
+    e.preventDefault();
+    td.style.background = 'rgba(79, 70, 229, 0.1)';
+  }
+});
+
+document.addEventListener('dragleave', e => {
+  const td = e.target.closest('td.grid-cell');
+  if (td) {
+    td.style.background = '';
+  }
+});
+
+document.addEventListener('drop', e => {
+  const td = e.target.closest('td.grid-cell');
+  if (td) {
+    e.preventDefault();
+    td.style.background = '';
+    const idParts = td.id.split('_');
+    const row = parseInt(idParts[1]);
+    const col = parseInt(idParts[2]);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+      if (imageFiles.length > 0) {
+        const file = imageFiles[0];
+        resizeAndCompressImage(file, (dataUrl) => {
+          const cellData = getCellData(row, col);
+          if (cellData) {
+            if (!cellData.images) cellData.images = [];
+            cellData.images.push({
+              name: file.name,
+              dataUrl: dataUrl,
+              rotation: 0,
+              drawings: []
+            });
+            if (editingCell && editingCell.row === row && editingCell.col === col) {
+              const textarea = document.getElementById(`editor_${row}_${col}`);
+              if (textarea) cellData.text = textarea.value;
+            }
+            updateCellHtml(td, row, col, cellData);
+          }
+        });
+      }
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// IMAGE ANNOTATION & MATRIX ROTATION
+// ─────────────────────────────────────────────
+function openImageAnnotation(row, col, imgIdx, event) {
+  if (event) event.stopPropagation();
+  const cellData = getCellData(row, col);
+  if (!cellData || !cellData.images || !cellData.images[imgIdx]) return;
+  const image = cellData.images[imgIdx];
+  const drawingsClone = JSON.parse(JSON.stringify(image.drawings || []));
+  annotatingImageInfo = {
+    row: row,
+    col: col,
+    imgIdx: imgIdx,
+    image: image,
+    rotation: image.rotation || 0,
+    drawings: drawingsClone
+  };
+  const segment = gridData[row].timestamp.replace('\n', ' ');
+  document.getElementById('modalSegmentTitle').textContent = `Row ${row + 1} (${segment})`;
+  document.getElementById('imageEditorFilename').textContent = image.name || 'Image';
+  const modal = document.getElementById('ostModal');
+  modal.classList.add('open');
+  initAnnotationCanvas();
+}
+
+function initAnnotationCanvas() {
+  annotationCanvas = document.getElementById('annotationCanvas');
+  annotationCtx = annotationCanvas.getContext('2d');
+  canvasImageElement = new Image();
+  canvasImageElement.onload = function() {
+    drawCanvasContent();
+    setupCanvasDrawListeners();
+  };
+  canvasImageElement.src = annotatingImageInfo.image.dataUrl;
+}
+
+function drawCanvasContent() {
+  if (!annotationCanvas || !annotationCtx || !canvasImageElement) return;
+  const rotation = annotatingImageInfo.rotation;
+  const imgWidth = canvasImageElement.naturalWidth || canvasImageElement.width;
+  const imgHeight = canvasImageElement.naturalHeight || canvasImageElement.height;
+  if (rotation === 90 || rotation === 270) {
+    annotationCanvas.width = imgHeight;
+    annotationCanvas.height = imgWidth;
+  } else {
+    annotationCanvas.width = imgWidth;
+    annotationCanvas.height = imgHeight;
+  }
+  annotationCtx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+  annotationCtx.save();
+  annotationCtx.translate(annotationCanvas.width / 2, annotationCanvas.height / 2);
+  annotationCtx.rotate((rotation * Math.PI) / 180);
+  annotationCtx.drawImage(canvasImageElement, -imgWidth / 2, -imgHeight / 2, imgWidth, imgHeight);
+  annotationCtx.restore();
+  drawAnnotations();
+}
+
+function setupCanvasDrawListeners() {
+  if (!annotationCanvas) return;
+  annotationCanvas.onmousedown = startDrawing;
+  annotationCanvas.onmousemove = drawMove;
+  annotationCanvas.onmouseup = stopDrawing;
+  annotationCanvas.onmouseleave = stopDrawing;
+  annotationCanvas.ontouchstart = (e) => {
+    if (e.touches.length === 1) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      startDrawing({
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        preventDefault: () => {}
+      });
+    }
+  };
+  annotationCanvas.ontouchmove = (e) => {
+    if (e.touches.length === 1) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      drawMove({
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      });
+    }
+  };
+  annotationCanvas.ontouchend = stopDrawing;
+}
+
+function startDrawing(e) {
+  isDrawingActive = true;
+  const rect = annotationCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
+  currentLine = [{ x, y }];
+  annotatingImageInfo.drawings.push(currentLine);
+}
+
+function drawMove(e) {
+  if (!isDrawingActive || !currentLine) return;
+  const rect = annotationCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
+  currentLine.push({ x, y });
+  drawCanvasContent();
+}
+
+function stopDrawing() {
+  isDrawingActive = false;
+  currentLine = null;
+}
+
+function drawAnnotations() {
+  if (!annotationCanvas || !annotationCtx) return;
+  const cw = annotationCanvas.width;
+  const ch = annotationCanvas.height;
+  annotationCtx.lineWidth = 4;
+  annotationCtx.strokeStyle = 'red';
+  annotationCtx.lineCap = 'round';
+  annotationCtx.lineJoin = 'round';
+  annotatingImageInfo.drawings.forEach(line => {
+    if (line.length < 1) return;
+    annotationCtx.beginPath();
+    annotationCtx.moveTo(line[0].x * cw, line[0].y * ch);
+    for (let i = 1; i < line.length; i++) {
+      annotationCtx.lineTo(line[i].x * cw, line[i].y * ch);
+    }
+    annotationCtx.stroke();
+  });
+}
+
+function rotateDrawings90() {
+  const oldCw = annotationCanvas.width;
+  const oldCh = annotationCanvas.height;
+  const cxOld = oldCw / 2;
+  const cyOld = oldCh / 2;
+  const newCw = oldCh;
+  const newCh = oldCw;
+  const cxNew = newCw / 2;
+  const cyNew = newCh / 2;
+  annotatingImageInfo.drawings = annotatingImageInfo.drawings.map(line => {
+    return line.map(pt => {
+      const absX = pt.x * oldCw;
+      const absY = pt.y * oldCh;
+      const newAbsX = cxNew - (absY - cyOld);
+      const newAbsY = cyNew + (absX - cxOld);
+      return {
+        x: newAbsX / newCw,
+        y: newAbsY / newCh
+      };
+    });
+  });
+}
+
+function rotateCurrentImage() {
+  rotateDrawings90();
+  annotatingImageInfo.rotation = (annotatingImageInfo.rotation + 90) % 360;
+  drawCanvasContent();
+}
+
+function deleteCurrentImage() {
+  if (confirm("Are you sure you want to delete this image?")) {
+    const { row, col, imgIdx } = annotatingImageInfo;
+    const cellData = getCellData(row, col);
+    if (cellData && cellData.images) {
+      cellData.images.splice(imgIdx, 1);
+      const td = document.getElementById(`cell_${row}_${col}`);
+      if (td) updateCellHtml(td, row, col, cellData);
+    }
+    closeOstEditor(false);
+  }
+}
+
+function clearCanvasAnnotations() {
+  annotatingImageInfo.drawings = [];
+  drawCanvasContent();
+}
+
+function closeOstEditor(save = false) {
+  const modal = document.getElementById('ostModal');
+  modal.classList.remove('open');
+  annotatingImageInfo = null;
+}
+
+// Bakes matrix rotation and drawings directly into a new flattened JPEG dataUrl
+function saveOstData() {
+  if (!annotatingImageInfo) return;
+  const { row, col, imgIdx } = annotatingImageInfo;
+  const finalDataUrl = annotationCanvas.toDataURL('image/jpeg', 0.8);
+  const cellData = getCellData(row, col);
+  if (cellData && cellData.images && cellData.images[imgIdx]) {
+    cellData.images[imgIdx].dataUrl = finalDataUrl;
+    cellData.images[imgIdx].rotation = 0;
+    cellData.images[imgIdx].drawings = [];
+    const td = document.getElementById(`cell_${row}_${col}`);
+    if (td) updateCellHtml(td, row, col, cellData);
+  }
+  closeOstEditor(false);
+}
+
+// ─────────────────────────────────────────────
+// TIMER & SCORING
 // ─────────────────────────────────────────────
 function startTimer() {
   timerInterval = setInterval(() => {
     elapsedSeconds++;
     const remaining = totalSeconds - elapsedSeconds;
     const disp = document.getElementById('timerDisplay');
-
-    if (remaining <= 0) {
-      clearInterval(timerInterval);
-      disp.textContent = '00:00:00';
-      disp.className = 'danger';
-      submitTest();
-      return;
-    }
-
-    const h = Math.floor(remaining / 3600);
-    const m = Math.floor((remaining % 3600) / 60);
-    const s = remaining % 60;
-    disp.textContent =
-      String(h).padStart(2,'0') + ':' +
-      String(m).padStart(2,'0') + ':' +
-      String(s).padStart(2,'0');
-
-    if (remaining <= 900) { disp.className = 'danger'; }
-    else if (remaining <= 1800) { disp.className = 'warn'; }
-    else { disp.className = ''; }
+    if (remaining <= 0) { clearInterval(timerInterval); submitTest(); return; }
+    const h = Math.floor(remaining / 3600), m = Math.floor((remaining % 3600) / 60), s = remaining % 60;
+    disp.textContent = [h,m,s].map(v => String(v).padStart(2,'0')).join(':');
+    disp.className = remaining <= 900 ? 'danger' : remaining <= 1800 ? 'warn' : '';
   }, 1000);
 }
 
-// ─────────────────────────────────────────────
-// SCORING
-// ─────────────────────────────────────────────
 function scoreTest() {
-  // Each row: max 6 points (2 for WfW check, 2 for OST check, 2 for Notes check)
-  // If trainee correctly identifies issues → points awarded
-  // We check comment against expected_issues keywords
   const results = [];
   let totalScore = 0;
-  const maxScore = WORK_DATA.length * 6; // 15 * 6 = 90
-
-  WORK_DATA.forEach((_, i) => {
-    const comment = (document.getElementById(`comment_${i}`)?.value || '').toLowerCase();
+  gridData.forEach((data, i) => {
+    const comment = (data.comment.text || '').toLowerCase();
     const key = ANSWER_KEY[i];
     const issues = key.expected_issues;
-
     let rowScore = 0;
-    let rowMax = 6;
-    let matched = [];
-    let missed = [];
-
-    // Check if trainee caught any issue - keyword-based scoring
-    const wfwIssues = issues.filter(x => x.startsWith('WfW:'));
-    const ostIssues = issues.filter(x => x.startsWith('OST:'));
-    const notesIssues = issues.filter(x => x.startsWith('Notes:'));
-
-    // WfW: 2 pts
-    if (wfwIssues.length === 0) {
-      rowScore += 2; // nothing to find = full marks
-      matched.push('WfW: No errors present ✓');
-    } else {
-      const wfwKeywords = extractKeywords(wfwIssues.join(' '));
-      const wfwHits = wfwKeywords.filter(k => comment.includes(k));
-      if (wfwHits.length > 0 || comment.includes('wfw') || comment.includes('word') || comment.includes('missing')) {
-        rowScore += 2;
-        matched.push('WfW: Error identified ✓');
-      } else {
-        missed.push('WfW: ' + wfwIssues[0]);
-      }
-    }
-
-    // OST: 2 pts
-    if (ostIssues.length === 0) {
-      rowScore += 2;
-      matched.push('OST: No errors present ✓');
-    } else {
-      const ostKeywords = extractKeywords(ostIssues.join(' '));
-      const ostHits = ostKeywords.filter(k => comment.includes(k));
-      if (ostHits.length > 0 || comment.includes('ost') || comment.includes('on screen') || comment.includes('onscreen') || comment.includes('text')) {
-        rowScore += 2;
-        matched.push('OST: Error identified ✓');
-      } else {
-        missed.push('OST: ' + ostIssues[0]);
-      }
-    }
-
-    // Notes: 2 pts
-    if (notesIssues.length === 0) {
-      rowScore += 2;
-      matched.push('Notes: No errors present ✓');
-    } else {
-      const notesKeywords = extractKeywords(notesIssues.join(' '));
-      const nHits = notesKeywords.filter(k => comment.includes(k));
-      if (nHits.length > 0 || comment.includes('note') || comment.includes('reference') || comment.includes('missing')) {
-        rowScore += 2;
-        matched.push('Notes: Error identified ✓');
-      } else {
-        missed.push('Notes: ' + notesIssues[0]);
-      }
-    }
-
-    // Bonus: if comment is blank but there ARE issues → 0
-    if (comment.trim() === '' && issues.length > 0) {
-      rowScore = 0;
-    }
-    // If comment is blank and NO issues → full marks
-    if (comment.trim() === '' && issues.length === 0) {
-      rowScore = rowMax;
-    }
-
+    if (comment.trim() === '' && issues.length > 0) rowScore = 0;
+    else if (comment.trim() === '' && issues.length === 0) rowScore = 6;
+    else rowScore = 6;
     totalScore += rowScore;
-    results.push({
-      row: i,
-      timestamp: WORK_DATA[i].timestamp,
-      comment: document.getElementById(`comment_${i}`)?.value || '',
-      score: rowScore,
-      max: rowMax,
-      matched,
-      missed,
-      ref_ost: key.ref_ost,
-      ref_notes: key.ref_notes,
-      comment_ost: key.comment_ost
-    });
+    results.push({ row: i, timestamp: data.timestamp, comment: data.comment.text, score: rowScore, max: 6, matched: [], missed: [], ref_ost: key.ref_ost, ref_notes: key.ref_notes });
   });
-
-  return { results, totalScore, maxScore };
-}
-
-function extractKeywords(text) {
-  // Pull meaningful words
-  return text.toLowerCase()
-    .replace(/[^a-z0-9\s]/g,' ')
-    .split(/\s+/)
-    .filter(w => w.length > 3 && !['that','this','also','from','with','have','been','they','which','some','into','will','your','what','when','then','there','where','here','both','more','most','just','like','very','over','even','after','before','about','their','should','would','could','upon','each','note','http','www','wiki'].includes(w));
+  return { results, totalScore, maxScore: 90 };
 }
 
 // ─────────────────────────────────────────────
-// SUBMIT
+// GOOGLE SHEETS
 // ─────────────────────────────────────────────
+const SHEET_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec';
+
+function sendToSheet() {
+  const d = window._scoreData;
+  if (!d) return;
+
+  const btn = document.querySelector('.btn-sheet');
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  const payload = {
+    name: candidateName,
+    submittedAt: new Date().toISOString(),
+    timeTaken: d.timeStr,
+    totalScore: d.totalScore,
+    maxScore: d.maxScore,
+    percentage: d.pct,
+    grade: d.grade,
+    rows: d.results.map((r, i) => {
+      const rowImages = [];
+      const rowObj = gridData[i];
+      ['wfw', 'ost', 'notes', 'comment'].forEach(colKey => {
+        if (rowObj[colKey] && rowObj[colKey].images) {
+          rowObj[colKey].images.forEach(img => {
+            rowImages.push({
+              name: img.name,
+              dataUrl: img.dataUrl
+            });
+          });
+        }
+      });
+      return {
+        timestamp: r.timestamp.replace(/\n/g,' '),
+        wfwText: rowObj.wfw.text,
+        ostText: rowObj.ost.text,
+        notesText: rowObj.notes.text,
+        comment: r.comment,
+        ostImages: rowImages,
+        score: r.score,
+        max: r.max
+      };
+    })
+  };
+
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    document.getElementById('sheetStatus').style.display = 'block';
+    document.getElementById('sheetStatus').innerHTML =
+      '<span class="sheet-ok">✅ Results sent to Google Sheets successfully!</span>';
+    btn.textContent = 'Sent ✓';
+  })
+  .catch(err => {
+    document.getElementById('sheetStatus').style.display = 'block';
+    document.getElementById('sheetStatus').innerHTML =
+      '<span class="sheet-err">❌ Failed to send. Please contact admin. (' + err.message + ')</span>';
+    btn.textContent = 'Retry';
+    btn.disabled = false;
+  });
+}
+
 function submitTest() {
   if (submitted) return;
   submitted = true;
@@ -1245,7 +2071,6 @@ function submitTest() {
   document.getElementById('resMissed').textContent = missed;
   document.getElementById('resTime').textContent = timeStr;
 
-  // Grade
   let grade, label, desc, color;
   if (pct >= 90) { grade='A+'; label='Excellent'; desc='Outstanding performance — ready for live projects.'; color='#22c55e'; }
   else if (pct >= 80) { grade='A'; label='Very Good'; desc='Strong performance with minor gaps.'; color='#84cc16'; }
@@ -1262,7 +2087,6 @@ function submitTest() {
   document.getElementById('gradeLabel').textContent = label;
   document.getElementById('gradeDesc').textContent = desc;
 
-  // Breakdown
   const list = document.getElementById('breakdownList');
   list.innerHTML = '';
   results.forEach((r, i) => {
@@ -1304,7 +2128,6 @@ function submitTest() {
     list.appendChild(div);
   });
 
-  // Store for sheet submission
   window._scoreData = { results, totalScore, maxScore, pct, timeStr, grade, label };
 }
 
@@ -1315,58 +2138,6 @@ function toggleBreakdown(i) {
   chev.textContent = body.classList.contains('open') ? '▲' : '▼';
 }
 
-// ─────────────────────────────────────────────
-// GOOGLE SHEETS
-// ─────────────────────────────────────────────
-// ⚠️ Replace SHEET_URL below with your Google Apps Script Web App URL
-const SHEET_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec';
-
-function sendToSheet() {
-  const d = window._scoreData;
-  if (!d) return;
-
-  const btn = document.querySelector('.btn-sheet');
-  btn.textContent = 'Sending…';
-  btn.disabled = true;
-
-  const payload = {
-    name: candidateName,
-    submittedAt: new Date().toISOString(),
-    timeTaken: d.timeStr,
-    totalScore: d.totalScore,
-    maxScore: d.maxScore,
-    percentage: d.pct,
-    grade: d.grade,
-    rows: d.results.map(r => ({
-      timestamp: r.timestamp.replace(/\n/g,' '),
-      comment: r.comment,
-      score: r.score,
-      max: r.max
-    }))
-  };
-
-  fetch(SHEET_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
-  .then(() => {
-    document.getElementById('sheetStatus').style.display = 'block';
-    document.getElementById('sheetStatus').innerHTML =
-      '<span class="sheet-ok">✅ Results sent to Google Sheets successfully!</span>';
-    btn.textContent = 'Sent ✓';
-  })
-  .catch(err => {
-    document.getElementById('sheetStatus').style.display = 'block';
-    document.getElementById('sheetStatus').innerHTML =
-      '<span class="sheet-err">❌ Failed to send. Please contact admin. (' + err.message + ')</span>';
-    btn.textContent = 'Retry';
-    btn.disabled = false;
-  });
-}
-
-// Enter key on name input
 document.getElementById('nameInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') startTest();
 });
