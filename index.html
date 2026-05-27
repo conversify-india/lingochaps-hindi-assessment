@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hindi Audio Assessment | LingoChaps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #161922;
+      --surface2: #1e2230;
+      --border: #2a2f40;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --text: #e8eaf0;
+      --muted: #8892a4;
+      --card: #1a1f2e;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── SPLASH / NAME SCREEN ─── */
+    #splash {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 60% 40%, #1a1050 0%, #0d0f14 70%);
+      padding: 24px;
+    }
+    .splash-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(108,99,255,0.15);
+    }
+    .splash-logo {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 24px;
+    }
+    .splash-card h1 {
+      font-size: 26px; font-weight: 800;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .splash-card p {
+      color: var(--muted); font-size: 14px; line-height: 1.6;
+      margin-bottom: 28px;
+    }
+    .info-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-bottom: 28px;
+    }
+    .info-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 12px; color: var(--muted);
+    }
+    .info-pill strong {
+      display: block; font-size: 14px;
+      color: var(--text); margin-bottom: 2px;
+    }
+    .field-label {
+      font-size: 13px; font-weight: 600;
+      color: var(--muted); text-align: left;
+      margin-bottom: 8px; letter-spacing: 0.5px;
+    }
+    #nameInput {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 20px;
+    }
+    #nameInput:focus { border-color: var(--accent); }
+    .btn-start {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: #fff;
+      border: none; border-radius: 12px;
+      padding: 15px 24px;
+      font-size: 16px; font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      letter-spacing: 0.3px;
+    }
+    .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(108,99,255,0.4); }
+    .rules-list {
+      text-align: left;
+      list-style: none;
+      margin-bottom: 24px;
+    }
+    .rules-list li {
+      font-size: 13px; color: var(--muted);
+      padding: 6px 0;
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .rules-list li::before {
+      content: '→';
+      color: var(--accent); flex-shrink: 0;
+    }
+
+    /* ─── MAIN ASSESSMENT ─── */
+    #app { display: none; }
+
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,15,20,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+    }
+    .top-left { display: flex; align-items: center; gap: 16px; }
+    .top-logo {
+      font-size: 18px; font-weight: 800;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .top-name {
+      font-size: 13px; color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 12px;
+    }
+    .top-name span { color: var(--text); font-weight: 600; }
+    .timer-box {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 16px;
+    }
+    .timer-icon { font-size: 18px; }
+    #timerDisplay {
+      font-size: 22px; font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 2px;
+      color: var(--green);
+      transition: color .3s;
+    }
+    #timerDisplay.warn { color: var(--yellow); }
+    #timerDisplay.danger { color: var(--red); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    .btn-submit-top {
+      background: linear-gradient(135deg, var(--green), #16a34a);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 10px 20px; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+    }
+    .btn-submit-top:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.4); }
+
+    .main-content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* Video + instructions row */
+    .top-section {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media(max-width:900px){ .top-section { grid-template-columns: 1fr; } }
+
+    .video-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .video-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .video-header .dot { width:10px; height:10px; border-radius:50%; }
+    .video-header h3 { font-size: 14px; font-weight: 600; color: var(--text); }
+    .video-embed-wrap {
+      position: relative; padding-bottom: 56.25%; height: 0;
+    }
+    .video-embed-wrap iframe {
+      position: absolute; top:0; left:0; width:100%; height:100%;
+      border:none;
+    }
+    .video-meta {
+      padding: 12px 16px;
+      font-size: 12px; color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+    .video-meta a { color: var(--accent); text-decoration: none; }
+
+    .instructions-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .instructions-card h3 {
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .instr-list { list-style: none; }
+    .instr-list li {
+      font-size: 13px; color: var(--muted);
+      padding: 7px 0;
+      display: flex; gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .instr-list li:last-child { border-bottom: none; }
+    .instr-num {
+      width: 20px; height: 20px;
+      background: var(--accent);
+      border-radius: 50%;
+      font-size: 11px; font-weight: 700;
+      color: #fff;
+      display: flex; align-items:center; justify-content:center;
+      flex-shrink: 0;
+    }
+    .col-legend {
+      display: grid; grid-template-columns: repeat(2,1fr); gap: 8px;
+      margin-top: 14px;
+    }
+    .col-pill {
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .col-pill.ts { background:#1a2535; border:1px solid #3b82f6; color:#60a5fa; }
+    .col-pill.wfw { background:#1a2520; border:1px solid #22c55e; color:#86efac; }
+    .col-pill.ost { background:#1e1a25; border:1px solid #a855f7; color:#c084fc; }
+    .col-pill.notes { background:#251a1a; border:1px solid #f59e0b; color:#fcd34d; }
+    .col-pill strong { display:block; font-size:11px; margin-bottom:2px; }
+
+    /* ─── TABLE ─── */
+    .table-section { margin-bottom: 32px; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-header h2 {
+      font-size: 18px; font-weight: 700;
+    }
+    .progress-bar-wrap {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .progress-bar {
+      width: 160px; height: 8px;
+      background: var(--surface2);
+      border-radius: 4px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      border-radius: 4px;
+      transition: width .4s;
+    }
+    .progress-text { font-size: 13px; color: var(--muted); }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 900px;
+    }
+    thead th {
+      background: var(--surface2);
+      padding: 13px 14px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    thead th:nth-child(1) { color: #60a5fa; width: 110px; }
+    thead th:nth-child(2) { color: #86efac; }
+    thead th:nth-child(3) { color: #c084fc; width: 180px; }
+    thead th:nth-child(4) { color: #fcd34d; width: 200px; }
+    thead th:nth-child(5) { color: var(--muted); width: 160px; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .2s;
+    }
+    tbody tr:hover { background: rgba(108,99,255,0.04); }
+    tbody tr:last-child { border-bottom: none; }
+
+    td {
+      padding: 14px;
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .ts-cell {
+      font-weight: 700;
+      color: #60a5fa;
+      font-size: 12px;
+      white-space: pre-line;
+      font-variant-numeric: tabular-nums;
+    }
+    .wfw-cell {
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.7;
+    }
+    .ost-cell {
+      color: #c084fc;
+      font-size: 12px;
+      white-space: pre-line;
+    }
+    .notes-cell {
+      color: #fcd34d;
+      font-size: 12px;
+      white-space: pre-line;
+    }
+    .comment-cell textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      line-height: 1.6;
+      resize: vertical;
+      min-height: 72px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .comment-cell textarea:focus { border-color: var(--accent); }
+    .comment-cell textarea::placeholder { color: var(--muted); opacity:.7; }
+
+    /* Answered indicator */
+    td.answered textarea {
+      border-color: var(--green);
+      background: rgba(34,197,94,0.04);
+    }
+
+    /* Row status badge */
+    .row-status {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 5px;
+      margin-top: 6px;
+    }
+    .row-status.done { background: rgba(34,197,94,.15); color: var(--green); }
+    .row-status.empty { background: rgba(239,68,68,.1); color: var(--red); }
+
+    /* ─── SUBMIT SECTION ─── */
+    .submit-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .submit-section h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .submit-section p { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+    .btn-submit-main {
+      background: linear-gradient(135deg, var(--green), #059669);
+      color: #fff; border: none; border-radius: 12px;
+      padding: 15px 40px; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+    }
+    .btn-submit-main:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(34,197,94,.35); }
+
+    /* ─── RESULTS SCREEN ─── */
+    #results {
+      display: none;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 40% 60%, #0d1a10 0%, #0d0f14 70%);
+      padding: 40px 24px;
+    }
+    .results-wrap { max-width: 900px; margin: 0 auto; }
+    .results-header { text-align: center; margin-bottom: 36px; }
+    .results-header h1 {
+      font-size: 32px; font-weight: 800;
+      background: linear-gradient(135deg, #fff, var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .results-header p { color: var(--muted); font-size: 15px; }
+
+    .score-hero {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 16px; margin-bottom: 28px;
+    }
+    @media(max-width:700px){ .score-hero { grid-template-columns: repeat(2,1fr); } }
+    .score-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+    }
+    .score-card .val {
+      font-size: 36px; font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .score-card .lbl { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .score-card.total .val { color: var(--accent); }
+    .score-card.pct .val { color: var(--green); }
+    .score-card.missed .val { color: var(--red); }
+    .score-card.time .val { color: var(--yellow); }
+
+    .overall-grade {
+      background: var(--card);
+      border: 2px solid;
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .grade-badge {
+      font-size: 48px; font-weight: 900;
+      width: 80px; height: 80px;
+      border-radius: 14px;
+      display: flex; align-items:center; justify-content:center;
+      flex-shrink: 0;
+    }
+    .overall-grade h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .overall-grade p { color: var(--muted); font-size: 14px; }
+
+    .breakdown-title {
+      font-size: 16px; font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .result-row {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .result-row-header {
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .result-row-header:hover { background: rgba(255,255,255,0.03); }
+    .result-ts {
+      font-size: 12px; font-weight: 700; color: #60a5fa;
+      min-width: 120px;
+    }
+    .result-score-pill {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 6px;
+    }
+    .result-score-pill.full { background: rgba(34,197,94,.15); color: var(--green); }
+    .result-score-pill.partial { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .result-score-pill.zero { background: rgba(239,68,68,.1); color: var(--red); }
+    .result-comment-preview {
+      font-size: 12px; color: var(--muted);
+      flex: 1;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .result-chevron { color: var(--muted); margin-left: auto; transition: transform .2s; }
+    .result-row-body {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 14px 16px;
+    }
+    .result-row-body.open { display: block; }
+    .result-grid {
+      display: grid; grid-template-columns: repeat(2,1fr);
+      gap: 12px;
+    }
+    @media(max-width:600px){ .result-grid { grid-template-columns: 1fr; } }
+    .result-field { font-size: 12px; }
+    .result-field .rf-label {
+      font-weight: 700; margin-bottom: 4px;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    .result-field .rf-text {
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .result-field .rf-text.good { background: rgba(34,197,94,.07); color: #86efac; }
+    .result-field .rf-text.bad { background: rgba(239,68,68,.07); color: #fca5a5; }
+
+    .send-sheet-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-top: 24px;
+      text-align: center;
+    }
+    .send-sheet-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .send-sheet-section p { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+    .btn-sheet {
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 12px 28px; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+    }
+    .btn-sheet:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(14,165,233,.3); }
+    #sheetStatus {
+      margin-top: 14px; font-size: 13px;
+      display: none;
+    }
+    .sheet-ok { color: var(--green); }
+    .sheet-err { color: var(--red); }
+
+    /* Misc */
+    .tag {
+      display: inline-block;
+      background: rgba(108,99,255,.15);
+      color: var(--accent);
+      border-radius: 5px;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 7px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── SPLASH SCREEN ─── -->
+<div id="splash">
+  <div class="splash-card">
+    <div class="splash-logo">🎧</div>
+    <h1>Hindi Audio Assessment</h1>
+    <p>LingoChaps Fresher Training Evaluation — Hindi (00:00:00 – 00:15:00)</p>
+
+    <div class="info-grid">
+      <div class="info-pill"><strong>⏱ 2 hrs 30 min</strong>Duration</div>
+      <div class="info-pill"><strong>🌐 Hindi</strong>Language</div>
+      <div class="info-pill"><strong>15 Segments</strong>Rows to Review</div>
+      <div class="info-pill"><strong>4 Columns</strong>Per Row</div>
+    </div>
+
+    <ul class="rules-list">
+      <li>Watch the video link embedded in the test.</li>
+      <li>Each row is pre-filled — <strong>check it carefully</strong> against the video.</li>
+      <li>If something is wrong in WfW, OST, or Notes — write a comment in the Comments column.</li>
+      <li>No translation required — only verification &amp; error-spotting.</li>
+      <li>Timer starts the moment you enter your name and begin.</li>
+    </ul>
+
+    <div class="field-label">YOUR FULL NAME</div>
+    <input id="nameInput" type="text" placeholder="Enter your name to begin…" autocomplete="off"/>
+    <button class="btn-start" id="btnStart" onclick="startTest()">Start Assessment →</button>
+  </div>
+</div>
+
+<!-- ─── MAIN ASSESSMENT ─── -->
+<div id="app">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-logo">🎧 LingoChaps</div>
+      <div class="top-name">Candidate: <span id="topName">—</span></div>
+      <span class="tag">Hindi · 00:00 – 00:15</span>
+    </div>
+    <div class="timer-box">
+      <span class="timer-icon">⏱</span>
+      <div id="timerDisplay">02:30:00</div>
+    </div>
+    <button class="btn-submit-top" onclick="submitTest()">Submit Test</button>
+  </div>
+
+  <div class="main-content">
+    <!-- Video + instructions -->
+    <div class="top-section">
+      <div class="video-card">
+        <div class="video-header">
+          <div class="dot" style="background:#ef4444"></div>
+          <div class="dot" style="background:#f59e0b"></div>
+          <div class="dot" style="background:#22c55e"></div>
+          <h3>Reference Video — Watch while reviewing</h3>
+        </div>
+        <div class="video-embed-wrap">
+          <iframe src="https://www.youtube.com/embed/VQ81mP7p0W4" allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+          </iframe>
+        </div>
+        <div class="video-meta">
+          Video Title (Hindi): मुस्लिम देश में छाया दुर्गा पूजा | Durga Puja Muslim 2025 &nbsp;·&nbsp;
+          <a href="https://www.youtube.com/watch?v=VQ81mP7p0W4" target="_blank">Open in YouTube ↗</a>
+        </div>
+      </div>
+
+      <div class="instructions-card">
+        <h3>📋 What you need to check</h3>
+        <ul class="instr-list">
+          <li><div class="instr-num">1</div><div>Listen to each minute segment of the video carefully.</div></li>
+          <li><div class="instr-num">2</div><div><strong>WfW (Word for Word):</strong> Compare every line with the audio. Flag missing words, wrong words, or skipped lines.</div></li>
+          <li><div class="instr-num">3</div><div><strong>OST (On Screen Text):</strong> Check if all on-screen text visible in the video is captured. Report anything missing or wrong.</div></li>
+          <li><div class="instr-num">4</div><div><strong>Notes:</strong> Verify any contextual/reference notes are appropriate and correct.</div></li>
+          <li><div class="instr-num">5</div><div>Write your observations in the <strong>Comments</strong> column. Leave blank only if everything is correct.</div></li>
+        </ul>
+
+        <div class="col-legend">
+          <div class="col-pill ts"><strong>Timestamp</strong>Time range (pre-filled)</div>
+          <div class="col-pill wfw"><strong>WfW Translation</strong>Word-for-word content</div>
+          <div class="col-pill ost"><strong>OST</strong>On-screen text</div>
+          <div class="col-pill notes"><strong>Notes</strong>Context / References</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-section">
+      <div class="section-header">
+        <h2>📝 Review Segments</h2>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+          <span class="progress-text" id="progressText">0 / 15 commented</span>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="assessmentTable">
+          <thead>
+            <tr>
+              <th>⏱ Timestamp</th>
+              <th>✍️ WfW Translation (Pre-filled)</th>
+              <th>🖥 OST (Pre-filled)</th>
+              <th>📎 Notes (Pre-filled)</th>
+              <th>💬 Your Comments</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="submit-section">
+      <h2>✅ Ready to submit?</h2>
+      <p>Make sure you've reviewed all 15 segments. Once submitted, your score will be calculated automatically.</p>
+      <button class="btn-submit-main" onclick="submitTest()">Submit & See Score →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── RESULTS SCREEN ─── -->
+<div id="results">
+  <div class="results-wrap">
+    <div class="results-header">
+      <h1>Assessment Results</h1>
+      <p id="resultMeta">—</p>
+    </div>
+
+    <div class="score-hero">
+      <div class="score-card total"><div class="val" id="resTotal">—</div><div class="lbl">Total Score</div></div>
+      <div class="score-card pct"><div class="val" id="resPct">—</div><div class="lbl">Percentage</div></div>
+      <div class="score-card missed"><div class="val" id="resMissed">—</div><div class="lbl">Rows Missed</div></div>
+      <div class="score-card time"><div class="val" id="resTime">—</div><div class="lbl">Time Taken</div></div>
+    </div>
+
+    <div class="overall-grade" id="gradeBar">
+      <div class="grade-badge" id="gradeBadge">—</div>
+      <div>
+        <h3 id="gradeLabel">—</h3>
+        <p id="gradeDesc">—</p>
+      </div>
+    </div>
+
+    <div class="breakdown-title">Row-by-row Breakdown</div>
+    <div id="breakdownList"></div>
+
+    <div class="send-sheet-section">
+      <h3>📊 Send Results to Google Sheets</h3>
+      <p>Your score will be automatically logged with your name, timestamp, and row-by-row details.</p>
+      <button class="btn-sheet" onclick="sendToSheet()">Send to Google Sheets →</button>
+      <div id="sheetStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA: Work file (pre-filled content shown to trainee)
+// ─────────────────────────────────────────────
+const WORK_DATA = [
+  {
+    timestamp: "00.00.00 - 00.01.00\n(Ajmal)",
+    wfw: `Abdullah Salim: Hindu religion. I want to adopt Hinduism, I want to become a Hindu, Abdullah Salim wants to become a Hindu. What is the process, what is the "Mul Mantra"?
+Background male voiceover: Friends, just imagine if I were to tell you that this time, the most astonishing sight not seen in India but rather was seen in those countries where muslims are majority in the population, so would you believe it? This is the real mystery.
+Male voice 1 in the background: And you people are doing this Durga worship?
+Shakeel Rafiq: Mhm, we people are doing it. We have Tauseef Rehman with us and Imran Ashfaq is with us, Nawazuddin is, Syed Muhammad Shabir is, Moinuddin is and Moin ur [00:00:43 *half cut word] and Wasim.
+Male voice 1 in the background: So basically all the muslim people have come and are doing this worship?
+Shakeel Rafiq: It's organized by all the muslim people for some families.
+Background male voiceover: Slogans of "Victory to Durga worship" have echoed on muslim land and this sight has shaken the entire world.`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.01.00 - 00.02.00",
+    wfw: `Background male voiceover: In the Navaratri festival that started from 22nd September, 2025, from Pakistan to Indonesia and Afghanistan
+Background male voiceover: Crowd congregated in the marquees of mother Durga. These are the same places where temples were destroyed, idols were toppled and now the same people have decorated the trays and are performing the Goddess. Is this merely a wonder of faith or is it a sign of the coming times?
+Video clip [00:01:46 - 00:01:55 - *unintelligible voices*]
+Background male voiceover: Imagine women wearing burqas are standing in front of mother Durga with their hands folded in the streets of Kabul.`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.02.00 - 00.03.00",
+    wfw: `Background male voiceover: Muslims are bowing their foreheads near the flame of the ancient fire of Azerbaijan and muslim and hindus are being seen together performing the Durga worship in Shakti Peeth, in Bangladesh. These pictures are not just of the worship but of the new era where the power of the Sanatana is breaking barriers.
+Background male voiceover: So the question arises, what is the reason after all, when the countries which once attempted to suppress the Hindu culture…
+Video clip - Man in white dress: You're a Hindu, right?
+Video clip - man in Saffron color clothes: Yes, brother.
+Background male voiceover: the echo of devotion to Navaratri is being heard there today. We are going to disclose this truth in front of you today. That is why watch the video to the end because what you are about to know, it will move the ground of your thinking.`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.03.00 - 00.04.00",
+    wfw: `Background male voiceover: But before that, quickly comment and tell us from which city or village of India you're watching this video from so we may also know where and where this video of full of devotion to Durga mother is reaching and do subscribe to the channel so that you can get every trending video first. Seeing the sight of the Durga worship on the land of a muslim country, the whole world quivered. Do you have a doubt? Navaratri 2025, you watch this video first.
+Video clip - woman in white scarf: The condition of my son was very serious, that what was happening in someone's mind, nothing is known and I'm so happy that God has accepted my prayer which I had asked from God that my son should get well. That is why I have established the temple in my house today.
+Video clip - woman 2 in white scarf: and I have also performed His "Aarti" with great passion like I always do and I have prayed to Him that dear God, may the peace, comfort, prosperity, and tranquility in our city and in the whole of India be maintained in the same manner and the same unity remains between the hindu and muslim brothers, there should be no discrimination, ever.
+Background male voiceover: The women seen in both of the clips`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.04.00 - 00.05.00",
+    wfw: `Background male voiceover: belongs to the Islamic faith. Scarf on the head, these women, infused in the Islamic customs and ways are muslims by name yet still, they worship Gods and install the idol of mother Durga during Navaratri and this sight is not just of the Indian muslims, but a similar devotion is visible in countries having the Muslim majority like Pakistan and Indonesia. This 15-minute video shows you a glimpse of that astonishing sight. The festival of Navaratri is celebrated with great enthusiasm across India.`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.05.00 - 00.06.00",
+    wfw: `Background male voiceover: It's not just a festival for the Hindus, but is that wonderful time of serving Durga, the Goddess with nine forms which showers in the form of blessings upon her devotees. The state of indigence, unrest and poverty of the house is removed with the entry of the Goddess in the house and everything is filled with her divine blessings. This season of Navaratri, when devotees of mother Durga from outside India are lighting lamps of faith, when children of Islam are also becoming devotees of the Sanatana Goddess, this sight is truly incredibly astonishing. Now look at this clip. There is a girl in the clip. She is wearing saffron colored clothes and accessories.`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.06.00 - 00.07.00",
+    wfw: `Background male voiceover: despite belonging to the religion of Islam has not only participated in the Durga worship but has also seated her daughter Rimsha in the form of a goddess. Rimsha's mother is clearly seen as dedicated to the Hindu religion, similarly, Rimsha's father Nadeem also has great reverence and love for the Sanatana and Sanatani festival in his heart. You can clearly see its clip. A cap on his head and wearing a Kurta-Pajama on his body, Nadeem appears to be a true muslim by his appearance yet still, he has participated in Navaratri by dressing up his daughter in the form of a goddess Durga. This is a symbol of the notion that Navaratri is celebrated wholeheartedly not only by the Hindus but also by the muslims which is a matter of great pride for the Sanatana. This elderly person also belongs to the religion of Islam which is proven by the cap on his head but when you look at the forehead then you will see a mark applied there which is a symbol of the Hindu culture.`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.07.00 - 00.08.00",
+    wfw: `Old man in maroon shirt/white cap: And I follow it in a good way.
+Background male voiceover: This elderly man says that both, Hindu and Muslim communities celebrate Navaratri together and all the Hindu rituals and customs, there are certain rules, they are being followed fervently for the whole 9 days. And this sight is from Bihar, India where an example of national unity is being presented. Besides Bihar, the love for Sanatana by the muslims is rising in West Bengal. This girl is muslim by religion but when she was not allowed to pray in the mosque, she went to the temple there. No one stopped her there and this is what touched the girl's heart.
+Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer the Eid prayers in West Bengal, he ruined my Eid so I saw that the temple door was open for me and is open with full respect, so I celebrated Navaratri and the way daughters are being worshipped in Navaratri, daughters are being considered the form of the goddess,`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.08.00 - 00.09.00",
+    wfw: `Background male voiceover: is not only seen in India but also on foreign muslim land where chants of "Victory" mother Durga are being raised with extreme enthusiasm. Pavilions are being decorated and their worship is being performed in a magnificent way which also includes Pakistan. Yes, India's neighboring country Pakistan which always has this thought to eradicate Hindus and Hindutva from its country. Today, the muslim followers of that country have become fans of Hindu festivals. They are energetically participating in the festivals of Navaratri along with the Hindus. From buying items for the embellishment of goddess Durga from the shops, to participating in devotional hymns, everywhere you will see the participation of muslims. They remain at the feet of goddess Durga all night long and they greatly serve her for 9 days. If you see the largest crowd anywhere in Pakistan during Navaratri, then it is at the Shakti Peeth of mother Durga which is known by the name of the Hinglaj temple. This temple is famous in the form of Hinglaj goddess and lord Shiva is also idolized. According to religious scriptures, in this part of Pakistan`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.09.00 - 00.10.00",
+    wfw: `Background male voiceover: the head of goddess Sati fell here, that is why the Hinglaj temple was constructed there. Here you will see muslims in a large number along with Hindus because they refer to this temple as grandmother's pilgrimage, Bibi Nani Pir, and they call it by the name "The grandmother temple". Muslim community calls mother Hinglaj as "The grandmother", this is why it is called grandmother's pilgrimage. This temple is located in Pakistan and is an invaluable part of the cultural heritage of the Baloch tribes for which they can even sacrifice their lives. This is the reason that along with the Hindus, muslims also come to this temple to have a view of the mother goddess during Navaratri and celebrate Navaratri in a very revelrous manner. See this, there are muslims here wearing caps on their heads and also the Hindus who respect the goddess Durga; who are both standing together in the pavilion of mother Durga. Not even the slightest religious discrimination is being observed and a similar unity is being seen in Indonesia as well. Yes, Indonesia, which is said to be the world's most populous muslim country. The majority of the population here passionately believes in Islam and`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.10.00 - 00.11.00\n(Sneha)",
+    wfw: `Background male voiceover: they believe with full devotion and follow every Islamic rule from the five daily prayers to the month-long fasts of Ramadan. Today that same country is rejoicing in the festival of Durga Puja. Watch this clip. This scene is from Indonesia, scented with Islamic essence, where a girl with full devotion is holding a plate and performing the aarti of Goddess Durga, while others stand peacefully with folded hands in respect of the Mother. In Jakarta, Indonesia, the atmosphere is just like in India. Grand pandals are decorated, and many devotional songs are sung. Watch this. This video clip is also from Indonesia, where a huge idol of Mother has been installed. The crowd of people is eager for a holy glimpse. Truly, this sight in a Muslim country is quite surprising. And you will be even more surprised to know that in Kabul, the capital of Afghanistan too…`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.11.00 - 00.12.00",
+    wfw: `Background male voiceover: a temple of Mother Durga is established. Yes, the same Afghanistan where terrorism dominates, Muslim women are kept confined inside their homes, and if they go out, they are strictly ordered to wear a burqa. In this country, there is neither a sense of belonging for Hindus nor any sympathy for non-Muslims. The proof of this was seen a few years ago when the Afghans completely destroyed the statue of Buddha and erased every trace of it. But they did not touch the Hindu temple, which you can take as the fear of Mother Power. In Kabul, on Asha Hill, this temple stands, known as Asamai Mata. The name of Asha Hill itself has been kept after the Mother. Here, devotees' every wish is fulfilled irrespective of time. That is why this temple is called the Asamai Temple. In this temple, besides Mother Shakti, idols of many Hindu gods and goddesses are also installed. During Navratri, Durga Puja is celebrated here with great happiness and joy. Like in India, people here also gather in large numbers and go to the temple to worship Mother Goddess. They offer her food. And together…`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.12.00 - 00.13.00",
+    wfw: `Background male voiceover: they celebrate the festival of Durga Puja in a grand manner, and this tradition has been going on for years. Its glory has even reached the Muslim country of Azerbaijan. This is the same country known for its Islamic identity. Here, the Muslim population is spread everywhere, and Hindus exist only in name. In this strict country, there is a Hindu temple called the Temple of Fire. It is an ancient Hindu site where the fire has been continuously burning for centuries. People believe that Mother Power resides in this burning flame. The Temple of Fire is located in a place called Suraxani in Azerbaijan. Near the burning flame in the temple, Maa's trident is also present, while words are inscribed on the walls in Gurmukhi script. This temple is said to be 300 years old. Till today, extremists have not tried to destroy it, and they have not even dared to look at it. This can be called the glory of Mother Durga. Besides Azerbaijan, there is another country where not only a temple of Mother Bhagwati is established as a Shakti Peeth but…`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.13.00 - 00.14.00",
+    wfw: `Background male voiceover: …here, the festival of Durga Puja is also celebrated with great pomp, and this country is Bangladesh, India's neighboring Muslim nation. Here, not just one but five-five Shakti Peeths are present, and people—from Hindus to Muslims—bow before the Mother. Like this. By looking at this person's attire, you can easily understand that he is a Muslim, wearing a cap on his head and a kurta on his body. Yet, this person is sitting at the temple threshold, in front of a large idol of Maa Durga. In front of her, he not only bowed his head but also folded his hands, which is a living example of respect and devotion towards the Mother. Similarly, many Muslims today become devotees of Maa Durga and celebrate the festival of Navratri. The main ceremony begins on the 6th day, when the formal invocation of the Goddess is performed. At the end of the puja, on Vijayadashami, the idols are taken in processions and immersed in the river. This festival is not limited to the Hindu community only, people of all classes celebrate it. In Shakti Peeth temples…`,
+    ost: "",
+    notes: ""
+  },
+  {
+    timestamp: "00.14.00 - 00.15.00",
+    wfw: `Background male voiceover: …large crowds gather during Navratri. The most famous temple in Bangladesh is the Dhakeshwari Devi Temple, located in the capital, Dhaka. The city itself is named after the Goddess. On the banks of the Sugandha River in Bangladesh, there is the Ugratara Devi Shakti Peeth, where Mother Sati's nose fell. Along with this, the Kartoya Ghat Shakti Peeth is also present here, where Mother Sati's left palm fell. Similarly, there are many Shakti Peeths in Bangladesh, where devotees keep coming in large numbers. In this way, from Bangladesh to Afghanistan and Pakistan, despite having a Muslim population, not only do temples of the Mother exist, but the festival of Navratri is also celebrated with great celebration, which is evidence of the growing influence of Sanatan Dharma. By the way, what special plans do you have for this Navratri? Be sure to tell me in the comments. If you liked the video, like and share it, and don't forget to subscribe to the channel. Thank you. Friends, two more videos are shown on the screen, click on the screen to watch them.`,
+    ost: "",
+    notes: ""
+  }
+];
+
+// ─────────────────────────────────────────────
+// ANSWER KEY: What the correct/reference data is
+// Based on Reference + Comments Added files
+// ─────────────────────────────────────────────
+const ANSWER_KEY = [
+  {
+    // Row 1: 00.00.00-00.01.00
+    expected_issues: [
+      "WfW: Missing Sanskrit/Urdu language markers. In the WfW, at [00:00:01-00:00:03] the text should be marked as [English - 00:00:01 - 00:00:03] before 'I want to convert my religion'.",
+      "OST: OST is present from 0:00 throughout the video — must note '(Different language 00:00:00-00:04)', 'OST present at 0:00 to 0:11'. Also: National unity, Successor, half word/unreadable Urdu overlays, BRIGHT GYAN, Majisha Dhaam Pakistan, percentage counter at [00:00:12-00:00:13].",
+      "Notes: NOTE - There is fast changing number percentage in timestamp [00:00:12-00:00:13]. OST present from 0:00 to throughout the video."
+    ],
+    ref_ost: "(Urdu 0:01)\nNational unity\n(Urdu 0:01) *half word/unreadable*\nSuccessor\nBRIGHT GYAN\nMajisha Dhaam Pakistan",
+    ref_notes: "NOTE - There is fast changing number percentage in timestamp [00:00:12-00:00:13]\nOST present from 0:00 to throughout the video",
+    comment_ost: "....\n(Different language 00:00:00-00:04)\nOST present at 0:00 to 0:11",
+    comment_notes: "OST present from 0:00 to throughout the video"
+  },
+  {
+    // Row 2: 00.01.00-00.02.00
+    expected_issues: [
+      "WfW: Missing [Sanskrit Religious verses 00:01:00 - 00:01:12]: Om Namoh Bhagvate Vasudevaya — should be added before the Background voiceover text.",
+      "OST: BRIGHT GYAN, X, (Urdu 1:01-1:02 - not Urdu, either Sindhi or Sanskrit), VISHAL BHARAT SHANSTHAN — all missing.",
+      "Notes: References for Pakistan, Indonesia should be listed."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\n(Urdu 1:01 -1:02) - either Sindhi or Sanskrit\nVISHAL BHARAT SHANSTHAN",
+    ref_notes: "Pakistan: https://en.wikipedia.org/wiki/Pakistan\nIndonesia: https://en.wikipedia.org/wiki/Indonesia",
+    comment_ost: "BRIGHT GYAN\nVISHAL BHARAT SHANSTHAN",
+    comment_notes: ""
+  },
+  {
+    // Row 3: 00.02.00-00.03.00
+    expected_issues: [
+      "OST: BRIGHT GYAN, X, Great India Organization, VISHAL BHARAT SHANSTHAN, Hail Lord Rama, Jai Mata Di (JMD) missing.",
+      "Notes: References for Azerbaijan, Sanatana missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nGreat India Organization\nVISHAL BHARAT SHANSTHAN\nHail Lord Rama\nJAI MATA DI",
+    ref_notes: "Azerbaijan: https://en.wikipedia.org/wiki/Azerbaijan\nSanatana: https://en.wikipedia.org/wiki/Sanatana_Dharma",
+    comment_ost: "JAI MATA DI\n?\nJMD",
+    comment_notes: ""
+  },
+  {
+    // Row 4: 00.03.00-00.04.00
+    expected_issues: [
+      "WfW: Missing [Sanskrit Religious verses 00:03:00 - 00:03:02]: Mother — should appear at start of this segment.",
+      "OST: BRIGHT GYAN X, Mother Goddess…Durga…PUJA, NAV….2025, 10:27 PM, Bright Gyan UI elements (Home, Videos etc.) all missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nMother Goddess…\nDurga…\n…PUJA\nNAV….2025\n10:27 PM",
+    ref_notes: "",
+    comment_ost: "Follow us on\nF\n@brightgyanofficial\n6:27\n2.7k views 1 day ago\nSubscribe",
+    comment_notes: ""
+  },
+  {
+    // Row 5: 00.04.00-00.05.00
+    expected_issues: [
+      "OST: BRIGHT GYAN X, India, Punjab Keshari, Aaj Tak, K News, India 1 — all UI overlays missing.",
+      "Notes: No issues flagged in reference."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nIndia\nPunjab Keshari\nAaj Tak\nKNews\nIndia 1",
+    ref_notes: "",
+    comment_ost: "Follow us on\nF\n@brightgyanofficial\n6:27\n2.7K views 1 day ago\n94 views 1 hour ago",
+    comment_notes: ""
+  },
+  {
+    // Row 6: 00.05.00-00.06.00
+    expected_issues: [
+      "OST: BRIGHT GYAN X, Durga…PUJA, NAV….2025 missing.",
+      "Notes: Reference for Kolkata missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nDurga…\n…PUJA\nNAV….2025",
+    ref_notes: "Kolkata: https://en.wikipedia.org/wiki/Kolkata",
+    comment_ost: "",
+    comment_notes: ""
+  },
+  {
+    // Row 7: 00.06.00-00.07.00
+    expected_issues: [
+      "OST: BRIGHT GYAN, X, Unintelligible 6:12 should be noted as OST present 6:12-6:15.",
+      "Notes: References for Kurta, Pajama, Navaratri missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nUnintelligible 6:12",
+    ref_notes: "Kurta: https://en.wikipedia.org/wiki/Kurta\nPajama: https://en.wikipedia.org/wiki/Pajamas",
+    comment_ost: "(OST present at 6:12 to 6:15)",
+    comment_notes: ""
+  },
+  {
+    // Row 8: 00.07.00-00.08.00
+    expected_issues: [
+      "OST: BRIGHT GYAN, X, MMY, NEWSGALLERYMEDIA — all missing.",
+      "Notes: References for Bihar, West Bengal, Eid missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nMMY\nNEWSGALLERYMEDIA",
+    ref_notes: "Bihar: https://en.wikipedia.org/wiki/Bihar\nWest Bengal: https://en.wikipedia.org/wiki/West_Bengal",
+    comment_ost: "aNEWSGALLERYMEDIA",
+    comment_notes: ""
+  },
+  {
+    // Row 9: 00.08.00-00.09.00
+    expected_issues: [
+      "WfW: Missing — Background male voiceover: Since then, despite being a muslim, she started celebrating the Navaratri festival. Today, this sight — this line is cut off and belongs to 00:07-00:08 segment spilling over.",
+      "OST: BRIGHT GYAN, X, Majisha Dhaam Pakistan, .DGY, Unintelligible OST at 8:20-8:22 missing.",
+      "Notes: References for Hindutva, Shiva, Hinglaj temple missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nMajisha Dhaam Pakistan\n.DGY\nUnintelligible",
+    ref_notes: "Hindutva: https://en.wikipedia.org/wiki/Hindutva\nShiva: https://en.wikipedia.org/wiki/Shiva",
+    comment_ost: "OST Present at (8:20 to 8:22)",
+    comment_notes: ""
+  },
+  {
+    // Row 10: 00.09.00-00.10.00
+    expected_issues: [
+      "OST: BRIGHT GYAN, X, Grand night vigil, Salutation Welcome, DJ — all missing.",
+      "Notes: References for Balochistan, Baloch people missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nGrand night vigil\nSalutation Welcome\nDJ",
+    ref_notes: "Balochistan: https://en.wikipedia.org/wiki/Balochistan,_Pakistan\nBaloch: https://en.wikipedia.org/wiki/Baloch_people",
+    comment_ost: "Iaman",
+    comment_notes: ""
+  },
+  {
+    // Row 11: 00.10.00-00.11.00 (Sneha)
+    expected_issues: [
+      "OST: BRIGHT GYAN, X, Durga…PUJA, NAV….2025, Map overlay with country names (TURKMENISTAN, IRAN, PAKISTAN, KABUL, TAJIKISTAN, CHINA, INDIA, UZBEKISTAN, AFGHANISTAN) all missing.",
+      "Notes: References for Indonesia, Ramadan missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nDurga…\n…PUJA\nNAV….2025\nTURKMENISTAN\nIRAN\nTAJIKISTAN\nCHINA\nKabul\nAFGHANISTAN\nPAKISTAN\nUZBEKISTAN",
+    ref_notes: "Indonesia: https://en.wikipedia.org/wiki/Indonesia\nRamadan: https://en.wikipedia.org/wiki/Ramadan",
+    comment_ost: "…Puja\nTURKMENISTAN\nIRAN\nPAKISTAN\nKABUL\nTAJIKISTAN\nCHINA\nINDIA\nUZBEKISTAN\nAFGHANISTAN",
+    comment_notes: ""
+  },
+  {
+    // Row 12: 00.11.00-00.12.00
+    expected_issues: [
+      "OST: BRIGHT GYAN, X, map overlay countries, OST present at 11:03 — missing.",
+      "Notes: References for Afghans, Burqa missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nX\nTURKMENISTAN\nIRAN\nPAKISTAN\nKABUL\nTAJIKISTAN\nCHINA\nINDIA\nUZBEKISTAN\nAFGHANISTAN\n(OST present at 11:03)",
+    ref_notes: "Afghans: refers to the people/nation of Afghanistan.\nBurqa: https://en.wikipedia.org/wiki/Burqa",
+    comment_ost: "TURKMENISTAN\nIRAN\nPAKISTAN\nKABUL\nTAJIKISTAN\nCHINA\nINDIA\nUZBEKISTAN\nAFGHANISTAN\n(OST present at 11:03)",
+    comment_notes: ""
+  },
+  {
+    // Row 13: 00.12.00-00.13.00
+    expected_issues: [
+      "OST: BRIGHT GYAN, BO.. — missing.",
+      "Notes: References for Azerbaijan, Gurmukhi script missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nBO..",
+    ref_notes: "Azerbaijan: https://en.wikipedia.org/wiki/Azerbaijan\nGurmukhi script: https://en.wikipedia.org/wiki/Gurmukhi_script",
+    comment_ost: "BO..",
+    comment_notes: ""
+  },
+  {
+    // Row 14: 00.13.00-00.14.00
+    expected_issues: [
+      "OST: BRIGHT GYAN missing.",
+      "Notes: References for Bangladesh, Vijayadashami missing."
+    ],
+    ref_ost: "BRIGHT GYAN",
+    ref_notes: "Bangladesh: https://en.wikipedia.org/wiki/Bangladesh\nVijayadashami: https://en.wikipedia.org/wiki/Vijayadashami",
+    comment_ost: "",
+    comment_notes: ""
+  },
+  {
+    // Row 15: 00.14.00-00.15.00
+    expected_issues: [
+      "OST: BRIGHT GYAN, DURGA…PUJA, Subscribe, follow us on, YouTube UI elements, 'Thanks for watching / Leave a like & comment' end card — all missing.",
+      "Notes: References for Dhakeshwari Devi Temple, Dhaka, Sugandha River, Ugratara Devi missing."
+    ],
+    ref_ost: "BRIGHT GYAN\nDURGA……\n… PUJA\nFollow us on\nF\n@brightgyanofficial\nSubscribe\nHome\nVideos\nPlaylists\nThanks for watching\nLeave a like & comment",
+    ref_notes: "Dhakeshwari Devi Temple: https://en.wikipedia.org/wiki/Dhakeshwari_Temple\nDhaka: https://en.wikipedia.org/wiki/Dhaka",
+    comment_ost: "DURGA……\n… PUJA\nFollow us on\nF\n@brightgyanofficial\n6:27\n2.7K views 1 day ago\nThanks for watching\nLeave a like & comment",
+    comment_notes: ""
+  }
+];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let candidateName = '';
+let timerInterval = null;
+let totalSeconds = 2 * 60 * 60 + 30 * 60; // 2h 30m
+let elapsedSeconds = 0;
+let testStartTime = null;
+let submitted = false;
+
+// ─────────────────────────────────────────────
+// START TEST
+// ─────────────────────────────────────────────
+function startTest() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) {
+    document.getElementById('nameInput').style.borderColor = 'var(--red)';
+    document.getElementById('nameInput').focus();
+    return;
+  }
+  candidateName = name;
+  document.getElementById('topName').textContent = name;
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  buildTable();
+  startTimer();
+  testStartTime = new Date();
+}
+
+// ─────────────────────────────────────────────
+// BUILD TABLE
+// ─────────────────────────────────────────────
+function buildTable() {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  WORK_DATA.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    tr.id = `row_${i}`;
+    tr.innerHTML = `
+      <td class="ts-cell">${escHtml(row.timestamp)}</td>
+      <td class="wfw-cell">${escHtml(row.wfw)}</td>
+      <td class="ost-cell">${row.ost ? escHtml(row.ost) : '<span style="color:var(--border);font-style:italic">—</span>'}</td>
+      <td class="notes-cell">${row.notes ? escHtml(row.notes) : '<span style="color:var(--border);font-style:italic">—</span>'}</td>
+      <td class="comment-cell" id="cc_${i}">
+        <textarea id="comment_${i}" placeholder="Write your observations here… (leave blank if all correct)"
+          oninput="onCommentChange(${i})"></textarea>
+        <div class="row-status empty" id="status_${i}">No comment</div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/\n/g,'<br>');
+}
+
+function onCommentChange(i) {
+  const ta = document.getElementById(`comment_${i}`);
+  const cc = document.getElementById(`cc_${i}`);
+  const st = document.getElementById(`status_${i}`);
+  const hasText = ta.value.trim().length > 0;
+  if (hasText) {
+    cc.classList.add('answered');
+    st.textContent = 'Commented ✓';
+    st.className = 'row-status done';
+  } else {
+    cc.classList.remove('answered');
+    st.textContent = 'No comment';
+    st.className = 'row-status empty';
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  let count = 0;
+  WORK_DATA.forEach((_,i) => {
+    const ta = document.getElementById(`comment_${i}`);
+    if (ta && ta.value.trim()) count++;
+  });
+  const pct = Math.round((count / 15) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${count} / 15 commented`;
+}
+
+// ─────────────────────────────────────────────
+// TIMER
+// ─────────────────────────────────────────────
+function startTimer() {
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    const remaining = totalSeconds - elapsedSeconds;
+    const disp = document.getElementById('timerDisplay');
+
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      disp.textContent = '00:00:00';
+      disp.className = 'danger';
+      submitTest();
+      return;
+    }
+
+    const h = Math.floor(remaining / 3600);
+    const m = Math.floor((remaining % 3600) / 60);
+    const s = remaining % 60;
+    disp.textContent =
+      String(h).padStart(2,'0') + ':' +
+      String(m).padStart(2,'0') + ':' +
+      String(s).padStart(2,'0');
+
+    if (remaining <= 900) { disp.className = 'danger'; }
+    else if (remaining <= 1800) { disp.className = 'warn'; }
+    else { disp.className = ''; }
+  }, 1000);
+}
+
+// ─────────────────────────────────────────────
+// SCORING
+// ─────────────────────────────────────────────
+function scoreTest() {
+  // Each row: max 6 points (2 for WfW check, 2 for OST check, 2 for Notes check)
+  // If trainee correctly identifies issues → points awarded
+  // We check comment against expected_issues keywords
+  const results = [];
+  let totalScore = 0;
+  const maxScore = WORK_DATA.length * 6; // 15 * 6 = 90
+
+  WORK_DATA.forEach((_, i) => {
+    const comment = (document.getElementById(`comment_${i}`)?.value || '').toLowerCase();
+    const key = ANSWER_KEY[i];
+    const issues = key.expected_issues;
+
+    let rowScore = 0;
+    let rowMax = 6;
+    let matched = [];
+    let missed = [];
+
+    // Check if trainee caught any issue - keyword-based scoring
+    const wfwIssues = issues.filter(x => x.startsWith('WfW:'));
+    const ostIssues = issues.filter(x => x.startsWith('OST:'));
+    const notesIssues = issues.filter(x => x.startsWith('Notes:'));
+
+    // WfW: 2 pts
+    if (wfwIssues.length === 0) {
+      rowScore += 2; // nothing to find = full marks
+      matched.push('WfW: No errors present ✓');
+    } else {
+      const wfwKeywords = extractKeywords(wfwIssues.join(' '));
+      const wfwHits = wfwKeywords.filter(k => comment.includes(k));
+      if (wfwHits.length > 0 || comment.includes('wfw') || comment.includes('word') || comment.includes('missing')) {
+        rowScore += 2;
+        matched.push('WfW: Error identified ✓');
+      } else {
+        missed.push('WfW: ' + wfwIssues[0]);
+      }
+    }
+
+    // OST: 2 pts
+    if (ostIssues.length === 0) {
+      rowScore += 2;
+      matched.push('OST: No errors present ✓');
+    } else {
+      const ostKeywords = extractKeywords(ostIssues.join(' '));
+      const ostHits = ostKeywords.filter(k => comment.includes(k));
+      if (ostHits.length > 0 || comment.includes('ost') || comment.includes('on screen') || comment.includes('onscreen') || comment.includes('text')) {
+        rowScore += 2;
+        matched.push('OST: Error identified ✓');
+      } else {
+        missed.push('OST: ' + ostIssues[0]);
+      }
+    }
+
+    // Notes: 2 pts
+    if (notesIssues.length === 0) {
+      rowScore += 2;
+      matched.push('Notes: No errors present ✓');
+    } else {
+      const notesKeywords = extractKeywords(notesIssues.join(' '));
+      const nHits = notesKeywords.filter(k => comment.includes(k));
+      if (nHits.length > 0 || comment.includes('note') || comment.includes('reference') || comment.includes('missing')) {
+        rowScore += 2;
+        matched.push('Notes: Error identified ✓');
+      } else {
+        missed.push('Notes: ' + notesIssues[0]);
+      }
+    }
+
+    // Bonus: if comment is blank but there ARE issues → 0
+    if (comment.trim() === '' && issues.length > 0) {
+      rowScore = 0;
+    }
+    // If comment is blank and NO issues → full marks
+    if (comment.trim() === '' && issues.length === 0) {
+      rowScore = rowMax;
+    }
+
+    totalScore += rowScore;
+    results.push({
+      row: i,
+      timestamp: WORK_DATA[i].timestamp,
+      comment: document.getElementById(`comment_${i}`)?.value || '',
+      score: rowScore,
+      max: rowMax,
+      matched,
+      missed,
+      ref_ost: key.ref_ost,
+      ref_notes: key.ref_notes,
+      comment_ost: key.comment_ost
+    });
+  });
+
+  return { results, totalScore, maxScore };
+}
+
+function extractKeywords(text) {
+  // Pull meaningful words
+  return text.toLowerCase()
+    .replace(/[^a-z0-9\s]/g,' ')
+    .split(/\s+/)
+    .filter(w => w.length > 3 && !['that','this','also','from','with','have','been','they','which','some','into','will','your','what','when','then','there','where','here','both','more','most','just','like','very','over','even','after','before','about','their','should','would','could','upon','each','note','http','www','wiki'].includes(w));
+}
+
+// ─────────────────────────────────────────────
+// SUBMIT
+// ─────────────────────────────────────────────
+function submitTest() {
+  if (submitted) return;
+  submitted = true;
+  clearInterval(timerInterval);
+
+  const taken = elapsedSeconds;
+  const th = Math.floor(taken / 3600);
+  const tm = Math.floor((taken % 3600) / 60);
+  const ts = taken % 60;
+  const timeStr = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')}:${String(ts).padStart(2,'0')}`;
+
+  const { results, totalScore, maxScore } = scoreTest();
+  const pct = Math.round((totalScore / maxScore) * 100);
+  const missed = results.filter(r => r.score === 0).length;
+
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  document.getElementById('resultMeta').textContent =
+    `Candidate: ${candidateName} · Submitted: ${new Date().toLocaleString()}`;
+  document.getElementById('resTotal').textContent = `${totalScore}/${maxScore}`;
+  document.getElementById('resPct').textContent = `${pct}%`;
+  document.getElementById('resMissed').textContent = missed;
+  document.getElementById('resTime').textContent = timeStr;
+
+  // Grade
+  let grade, label, desc, color;
+  if (pct >= 90) { grade='A+'; label='Excellent'; desc='Outstanding performance — ready for live projects.'; color='#22c55e'; }
+  else if (pct >= 80) { grade='A'; label='Very Good'; desc='Strong performance with minor gaps.'; color='#84cc16'; }
+  else if (pct >= 70) { grade='B'; label='Good'; desc='Solid work. A few areas to improve.'; color='#eab308'; }
+  else if (pct >= 60) { grade='C'; label='Average'; desc='Needs more attention to detail.'; color='#f97316'; }
+  else if (pct >= 50) { grade='D'; label='Below Average'; desc='Significant gaps found — recommend re-training.'; color='#ef4444'; }
+  else { grade='F'; label='Fail'; desc='Major errors missed — re-training required.'; color='#dc2626'; }
+
+  const gradeBar = document.getElementById('gradeBar');
+  gradeBar.style.borderColor = color;
+  document.getElementById('gradeBadge').textContent = grade;
+  document.getElementById('gradeBadge').style.background = color + '22';
+  document.getElementById('gradeBadge').style.color = color;
+  document.getElementById('gradeLabel').textContent = label;
+  document.getElementById('gradeDesc').textContent = desc;
+
+  // Breakdown
+  const list = document.getElementById('breakdownList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const pctRow = Math.round((r.score / r.max) * 100);
+    const pillClass = pctRow === 100 ? 'full' : pctRow >= 50 ? 'partial' : 'zero';
+    const div = document.createElement('div');
+    div.className = 'result-row';
+    div.innerHTML = `
+      <div class="result-row-header" onclick="toggleBreakdown(${i})">
+        <div class="result-ts">${escHtml(r.timestamp.replace('\n',' '))}</div>
+        <span class="result-score-pill ${pillClass}">${r.score}/${r.max}</span>
+        <div class="result-comment-preview">${r.comment ? escHtml(r.comment.substring(0,80))+'…' : '(no comment)'}</div>
+        <div class="result-chevron" id="chev_${i}">▼</div>
+      </div>
+      <div class="result-row-body" id="rbody_${i}">
+        <div class="result-grid">
+          <div class="result-field">
+            <div class="rf-label" style="color:var(--muted)">Your Comment</div>
+            <div class="rf-text ${r.comment ? '' : 'bad'}">${r.comment ? escHtml(r.comment) : '(blank — no comment provided)'}</div>
+          </div>
+          <div class="result-field">
+            <div class="rf-label" style="color:#c084fc">Reference OST (Expected)</div>
+            <div class="rf-text good">${r.ref_ost ? escHtml(r.ref_ost) : '—'}</div>
+          </div>
+          <div class="result-field">
+            <div class="rf-label" style="color:#fcd34d">Reference Notes (Expected)</div>
+            <div class="rf-text good">${r.ref_notes ? escHtml(r.ref_notes) : '—'}</div>
+          </div>
+          <div class="result-field">
+            <div class="rf-label" style="color:#86efac">What was caught ✓</div>
+            <div class="rf-text good">${r.matched.map(x=>escHtml(x)).join('<br>') || '—'}</div>
+          </div>
+        </div>
+        ${r.missed.length > 0 ? `<div style="margin-top:10px;background:rgba(239,68,68,.07);border-radius:8px;padding:10px;font-size:12px;color:#fca5a5;">
+          <strong>❌ Missed:</strong><br>${r.missed.map(x=>escHtml(x)).join('<br>')}
+        </div>` : ''}
+      </div>
+    `;
+    list.appendChild(div);
+  });
+
+  // Store for sheet submission
+  window._scoreData = { results, totalScore, maxScore, pct, timeStr, grade, label };
+}
+
+function toggleBreakdown(i) {
+  const body = document.getElementById(`rbody_${i}`);
+  const chev = document.getElementById(`chev_${i}`);
+  body.classList.toggle('open');
+  chev.textContent = body.classList.contains('open') ? '▲' : '▼';
+}
+
+// ─────────────────────────────────────────────
+// GOOGLE SHEETS
+// ─────────────────────────────────────────────
+// ⚠️ Replace SHEET_URL below with your Google Apps Script Web App URL
+const SHEET_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec';
+
+function sendToSheet() {
+  const d = window._scoreData;
+  if (!d) return;
+
+  const btn = document.querySelector('.btn-sheet');
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  const payload = {
+    name: candidateName,
+    submittedAt: new Date().toISOString(),
+    timeTaken: d.timeStr,
+    totalScore: d.totalScore,
+    maxScore: d.maxScore,
+    percentage: d.pct,
+    grade: d.grade,
+    rows: d.results.map(r => ({
+      timestamp: r.timestamp.replace(/\n/g,' '),
+      comment: r.comment,
+      score: r.score,
+      max: r.max
+    }))
+  };
+
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    document.getElementById('sheetStatus').style.display = 'block';
+    document.getElementById('sheetStatus').innerHTML =
+      '<span class="sheet-ok">✅ Results sent to Google Sheets successfully!</span>';
+    btn.textContent = 'Sent ✓';
+  })
+  .catch(err => {
+    document.getElementById('sheetStatus').style.display = 'block';
+    document.getElementById('sheetStatus').innerHTML =
+      '<span class="sheet-err">❌ Failed to send. Please contact admin. (' + err.message + ')</span>';
+    btn.textContent = 'Retry';
+    btn.disabled = false;
+  });
+}
+
+// Enter key on name input
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startTest();
+});
+</script>
+</body>
+</html>
