@@ -876,10 +876,10 @@
         <h3>📋 What you need to check</h3>
         <ul class="instr-list">
           <li><div class="instr-num">1</div><div>Listen to each minute segment of the video carefully.</div></li>
-          <li><div class="instr-num">2</div><div><strong>WfW (Word for Word):</strong> Compare every line with the audio. Flag missing words, wrong words, or skipped lines.</div></li>
-          <li><div class="instr-num">3</div><div><strong>OST (On Screen Text):</strong> Check if all on-screen text visible in the video is captured. Report anything missing or wrong.</div></li>
-          <li><div class="instr-num">4</div><div><strong>Notes:</strong> Verify any contextual/reference notes are appropriate and correct.</div></li>
-          <li><div class="instr-num">5</div><div>Write your observations in the <strong>Comments</strong> column. Leave blank only if everything is correct.</div></li>
+          <li><div class="instr-num">2</div><div><strong>WfW (Word for Word):</strong> Compare every line with the audio. Correct any missing/wrong words, or skipped lines.</div></li>
+          <li><div class="instr-num">3</div><div><strong>OST (On Screen Text):</strong> Check if all on-screen text visible in the video is captured (add screenshots directly to OST).</div></li>
+          <li><div class="instr-num">4</div><div><strong>Notes:</strong> Verify and write appropriate reference notes for names and places.</div></li>
+          <li><div class="instr-num">5</div><div>Double-click or press Enter on any cell to edit it directly.</div></li>
         </ul>
 
         <div class="col-legend">
@@ -897,12 +897,12 @@
         <h2>📝 Review Segments</h2>
         <div class="progress-bar-wrap">
           <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-          <span class="progress-text" id="progressText">0 / 15 commented</span>
+          <span class="progress-text" id="progressText">0 / 15 reviewed</span>
         </div>
       </div>
 
       <div class="grid-info-banner">
-        💡 <strong>Google Sheets Mode</strong>: Click any cell to select. Press <strong>Enter</strong> to edit (Shift+Enter for new line). Use <strong>Arrow keys / Tab</strong> to navigate. Paste images (Ctrl+V) directly into cells!
+        💡 <strong>Google Sheets Mode</strong>: Click any cell to select. Press <strong>Enter</strong> to edit (Shift+Enter for new line). Use <strong>Arrow keys / Tab</strong> to navigate. Paste images (Ctrl+V) directly into OST cells!
       </div>
 
       <div class="table-wrapper">
@@ -913,7 +913,6 @@
               <th>✍️ WfW Translation</th>
               <th>🖥 OST</th>
               <th>📎 Notes</th>
-              <th>💬 Your Comments</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -1351,7 +1350,6 @@ function buildTable() {
     tr.appendChild(createGridCell(rIdx, 1, row.wfw));
     tr.appendChild(createGridCell(rIdx, 2, row.ost));
     tr.appendChild(createGridCell(rIdx, 3, row.notes));
-    tr.appendChild(createGridCell(rIdx, 4, row.comment));
     
     tbody.appendChild(tr);
   });
@@ -1408,12 +1406,18 @@ function updateCellHtml(td, rIdx, cIdx, cellData) {
     imagesHtml += `</div>`;
   }
   
-  td.innerHTML = `
-    <div class="cell-content-wrapper">
-      <div style="flex:1; white-space:pre-wrap; word-break:break-word; min-height:16px;">${cellData.text ? escHtml(cellData.text) : '<span style="color:var(--muted);opacity:0.3;font-style:italic">empty</span>'}</div>
-      ${imagesHtml}
+  const addImageBtnHtml = (cIdx === 2) 
+    ? `
       <button type="button" class="cell-add-image-btn" onclick="triggerCellImageUpload(${rIdx}, ${cIdx}, event)">📷 Add Image</button>
       <input type="file" id="upload_${rIdx}_${cIdx}" accept="image/*" style="display:none;" onchange="handleCellImageFile(this.files, ${rIdx}, ${cIdx})" />
+    ` 
+    : '';
+  
+  td.innerHTML = `
+    <div class="cell-content-wrapper">
+      <div style="flex:1; white-space:pre-wrap; word-break:break-word; min-height:16px;">${cellData.text ? escHtml(cellData.text) : ''}</div>
+      ${imagesHtml}
+      ${addImageBtnHtml}
     </div>`;
 }
 
@@ -1477,7 +1481,7 @@ function saveEditing() {
   const textarea = document.getElementById(`editor_${row}_${col}`);
   if (textarea) {
     getCellData(row, col).text = textarea.value;
-    if (col === 4) updateProgress();
+    updateProgress();
   }
   editingCell = null;
   const td = document.getElementById(`cell_${row}_${col}`);
@@ -1497,7 +1501,7 @@ function saveAndMove(dRow, dCol) {
   if (selectedCell) {
     let newRow = selectedCell.row + dRow;
     let newCol = selectedCell.col + dCol;
-    if (newRow >= 0 && newRow < 15 && newCol >= 0 && newCol < 5) {
+    if (newRow >= 0 && newRow < 15 && newCol >= 0 && newCol < 4) {
       selectedCell = { row: newRow, col: newCol };
       updateSelectionVisuals();
       const cell = document.getElementById(`cell_${newRow}_${newCol}`);
@@ -1513,7 +1517,6 @@ function getCellData(row, col) {
   if (col === 1) return rowObj.wfw;
   if (col === 2) return rowObj.ost;
   if (col === 3) return rowObj.notes;
-  if (col === 4) return rowObj.comment;
   return null;
 }
 
@@ -1523,7 +1526,7 @@ function clearCellText(row, col) {
   cellData.text = "";
   const td = document.getElementById(`cell_${row}_${col}`);
   if (td) updateCellHtml(td, row, col, cellData);
-  if (col === 4) updateProgress();
+  updateProgress();
 }
 
 function escHtml(str) {
@@ -1532,9 +1535,13 @@ function escHtml(str) {
 }
 
 function updateProgress() {
-  let count = gridData.filter(r => r.comment.text && r.comment.text.trim()).length;
+  let count = 0;
+  gridData.forEach((row, i) => {
+    const isEdited = (row.wfw.text !== WORK_DATA[i].wfw) || (row.ost.text && row.ost.text.trim() !== '') || (row.notes.text && row.notes.text.trim() !== '') || (row.ost.images && row.ost.images.length > 0);
+    if (isEdited) count++;
+  });
   document.getElementById('progressFill').style.width = Math.round((count / 15) * 100) + '%';
-  document.getElementById('progressText').textContent = `${count} / 15 commented`;
+  document.getElementById('progressText').textContent = `${count} / 15 reviewed`;
 }
 
 // ─────────────────────────────────────────────
@@ -1582,7 +1589,7 @@ function moveSelection(dRow, dCol) {
   if (selectedCell) {
     let newRow = selectedCell.row + dRow;
     let newCol = selectedCell.col + dCol;
-    if (newRow >= 0 && newRow < 15 && newCol >= 0 && newCol < 5) {
+    if (newRow >= 0 && newRow < 15 && newCol >= 0 && newCol < 4) {
       selectedCell = { row: newRow, col: newCol };
       updateSelectionVisuals();
       const cell = document.getElementById(`cell_${newRow}_${newCol}`);
@@ -1666,7 +1673,7 @@ function deleteCellImage(row, col, imgIdx, event) {
 // ─────────────────────────────────────────────
 document.addEventListener('paste', e => {
   const activeCell = editingCell || selectedCell;
-  if (activeCell) {
+  if (activeCell && activeCell.col === 2) {
     const items = (e.clipboardData || window.clipboardData).items;
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') === 0) {
@@ -1701,8 +1708,12 @@ document.addEventListener('paste', e => {
 document.addEventListener('dragover', e => {
   const td = e.target.closest('td.grid-cell');
   if (td) {
-    e.preventDefault();
-    td.style.background = 'rgba(79, 70, 229, 0.1)';
+    const idParts = td.id.split('_');
+    const col = parseInt(idParts[2]);
+    if (col === 2) {
+      e.preventDefault();
+      td.style.background = 'rgba(79, 70, 229, 0.1)';
+    }
   }
 });
 
@@ -1721,28 +1732,30 @@ document.addEventListener('drop', e => {
     const idParts = td.id.split('_');
     const row = parseInt(idParts[1]);
     const col = parseInt(idParts[2]);
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-      if (imageFiles.length > 0) {
-        const file = imageFiles[0];
-        resizeAndCompressImage(file, (dataUrl) => {
-          const cellData = getCellData(row, col);
-          if (cellData) {
-            if (!cellData.images) cellData.images = [];
-            cellData.images.push({
-              name: file.name,
-              dataUrl: dataUrl,
-              rotation: 0,
-              drawings: []
-            });
-            if (editingCell && editingCell.row === row && editingCell.col === col) {
-              const textarea = document.getElementById(`editor_${row}_${col}`);
-              if (textarea) cellData.text = textarea.value;
+    if (col === 2) {
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+        if (imageFiles.length > 0) {
+          const file = imageFiles[0];
+          resizeAndCompressImage(file, (dataUrl) => {
+            const cellData = getCellData(row, col);
+            if (cellData) {
+              if (!cellData.images) cellData.images = [];
+              cellData.images.push({
+                name: file.name,
+                dataUrl: dataUrl,
+                rotation: 0,
+                drawings: []
+              });
+              if (editingCell && editingCell.row === row && editingCell.col === col) {
+                const textarea = document.getElementById(`editor_${row}_${col}`);
+                if (textarea) cellData.text = textarea.value;
+              }
+              updateCellHtml(td, row, col, cellData);
             }
-            updateCellHtml(td, row, col, cellData);
-          }
-        });
+          });
+        }
       }
     }
   }
@@ -1965,15 +1978,18 @@ function scoreTest() {
   const results = [];
   let totalScore = 0;
   gridData.forEach((data, i) => {
-    const comment = (data.comment.text || '').toLowerCase();
     const key = ANSWER_KEY[i];
     const issues = key.expected_issues;
     let rowScore = 0;
-    if (comment.trim() === '' && issues.length > 0) rowScore = 0;
-    else if (comment.trim() === '' && issues.length === 0) rowScore = 6;
+    
+    const isEdited = (data.wfw.text !== WORK_DATA[i].wfw) || (data.ost.text && data.ost.text.trim() !== '') || (data.notes.text && data.notes.text.trim() !== '') || (data.ost.images && data.ost.images.length > 0);
+    
+    if (!isEdited && issues.length > 0) rowScore = 0;
+    else if (!isEdited && issues.length === 0) rowScore = 6;
     else rowScore = 6;
+    
     totalScore += rowScore;
-    results.push({ row: i, timestamp: data.timestamp, comment: data.comment.text, score: rowScore, max: 6, matched: [], missed: [], ref_ost: key.ref_ost, ref_notes: key.ref_notes });
+    results.push({ row: i, timestamp: data.timestamp, comment: isEdited ? "Edited" : "(no changes)", score: rowScore, max: 6, matched: [], missed: [], ref_ost: key.ref_ost, ref_notes: key.ref_notes });
   });
   return { results, totalScore, maxScore: 90 };
 }
@@ -2002,22 +2018,20 @@ function sendToSheet() {
     rows: d.results.map((r, i) => {
       const rowImages = [];
       const rowObj = gridData[i];
-      ['wfw', 'ost', 'notes', 'comment'].forEach(colKey => {
-        if (rowObj[colKey] && rowObj[colKey].images) {
-          rowObj[colKey].images.forEach(img => {
-            rowImages.push({
-              name: img.name,
-              dataUrl: img.dataUrl
-            });
+      if (rowObj.ost && rowObj.ost.images) {
+        rowObj.ost.images.forEach(img => {
+          rowImages.push({
+            name: img.name,
+            dataUrl: img.dataUrl
           });
-        }
-      });
+        });
+      }
       return {
         timestamp: r.timestamp.replace(/\n/g,' '),
         wfwText: rowObj.wfw.text,
         ostText: rowObj.ost.text,
         notesText: rowObj.notes.text,
-        comment: r.comment,
+        comment: '',
         ostImages: rowImages,
         score: r.score,
         max: r.max
@@ -2094,18 +2108,19 @@ function submitTest() {
     const pillClass = pctRow === 100 ? 'full' : pctRow >= 50 ? 'partial' : 'zero';
     const div = document.createElement('div');
     div.className = 'result-row';
+    const reviewStatus = r.comment;
     div.innerHTML = `
       <div class="result-row-header" onclick="toggleBreakdown(${i})">
         <div class="result-ts">${escHtml(r.timestamp.replace('\n',' '))}</div>
         <span class="result-score-pill ${pillClass}">${r.score}/${r.max}</span>
-        <div class="result-comment-preview">${r.comment ? escHtml(r.comment.substring(0,80))+'…' : '(no comment)'}</div>
+        <div class="result-comment-preview">${reviewStatus}</div>
         <div class="result-chevron" id="chev_${i}">▼</div>
       </div>
       <div class="result-row-body" id="rbody_${i}">
         <div class="result-grid">
           <div class="result-field">
-            <div class="rf-label" style="color:var(--muted)">Your Comment</div>
-            <div class="rf-text ${r.comment ? '' : 'bad'}">${r.comment ? escHtml(r.comment) : '(blank — no comment provided)'}</div>
+            <div class="rf-label" style="color:var(--muted)">Review Status</div>
+            <div class="rf-text">${reviewStatus}</div>
           </div>
           <div class="result-field">
             <div class="rf-label" style="color:#c084fc">Reference OST (Expected)</div>
