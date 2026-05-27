@@ -813,6 +813,103 @@
       background-size: contain;
       background-repeat: no-repeat;
     }
+    
+    /* Rich Editor Styles */
+    .rich-editor-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      z-index: 100;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+    }
+    .rich-toolbar {
+      display: flex;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      justify-content: flex-start;
+      height: 36px;
+      z-index: 10;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .tb-btn {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .tb-btn:hover {
+      background: var(--surface2);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .tb-btn:active {
+      transform: translateY(0);
+    }
+    .tb-btn.bold-btn {
+      font-weight: 800;
+    }
+    .tb-btn.italic-btn {
+      font-style: italic;
+    }
+    .tb-btn.highlight-btn span {
+      border-bottom: 3px solid #fef08a;
+      line-height: 1;
+      font-weight: bold;
+    }
+    .rich-editor {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 10px 12px;
+      outline: none;
+      word-break: break-word;
+      font-size: 13px;
+      line-height: 1.6;
+      background: var(--surface);
+      color: var(--text);
+      z-index: 5;
+      box-sizing: border-box;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+    
+    /* Highlight and links styles inside grid cell */
+    .notes-content-display a, .rich-editor a {
+      color: var(--accent);
+      text-decoration: underline;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .notes-content-display a:hover, .rich-editor a:hover {
+      color: var(--accent2);
+    }
+    .notes-content-display span[style*="background-color"], 
+    .rich-editor span[style*="background-color"] {
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
   </style>
 </head>
 <body>
@@ -1360,12 +1457,80 @@ function buildTable() {
   updateSelectionVisuals();
 }
 
+// ─────────────────────────────────────────────
+// RICH TEXT EDITING HELPERS FOR NOTES (COLUMN 3)
+// ─────────────────────────────────────────────
+function selectAllContentEditable(el) {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false); // Collapse to the end
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function toggleHighlight() {
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  let parent = range.commonAncestorContainer;
+  if (parent.nodeType === 3) parent = parent.parentNode;
+  
+  // Check if selection already has highlight
+  let hasHighlight = false;
+  let curr = parent;
+  const editor = document.activeElement;
+  while (curr && curr !== editor) {
+    if (curr.nodeType === 1 && (curr.style.backgroundColor === 'rgb(254, 240, 138)' || curr.style.backgroundColor === '#fef08a')) {
+      hasHighlight = true;
+      break;
+    }
+    curr = curr.parentNode;
+  }
+  
+  if (hasHighlight) {
+    document.execCommand('backColor', false, 'transparent');
+  } else {
+    document.execCommand('backColor', false, '#fef08a');
+  }
+}
+
+function insertHyperlink() {
+  const url = prompt("Enter URL (e.g., https://example.com):", "https://");
+  if (url && url !== "https://") {
+    const selection = window.getSelection();
+    if (selection.isCollapsed) {
+      // If no text is selected, insert the link with the URL itself as the text
+      const cleanUrl = url.replace(/"/g, '&quot;');
+      const linkHtml = `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${escHtml(url)}</a>`;
+      document.execCommand('insertHTML', false, linkHtml);
+    } else {
+      document.execCommand('createLink', false, url);
+      // Ensure target="_blank" is set for the link
+      setTimeout(() => {
+        const editor = document.activeElement;
+        if (editor && editor.classList.contains('rich-editor')) {
+          editor.querySelectorAll('a').forEach(a => {
+            if (!a.getAttribute('target')) {
+              a.setAttribute('target', '_blank');
+              a.setAttribute('rel', 'noopener noreferrer');
+            }
+          });
+        }
+      }, 10);
+    }
+  }
+}
+
 function createGridCell(rIdx, cIdx, cellData) {
   const td = document.createElement('td');
   td.className = 'grid-cell';
   td.id = `cell_${rIdx}_${cIdx}`;
   td.onclick = (e) => handleCellClick(rIdx, cIdx, e);
-  td.ondblclick = () => startEditing(rIdx, cIdx);
+  td.ondblclick = (e) => {
+    if (e.target.closest('a')) return;
+    startEditing(rIdx, cIdx);
+  };
   
   updateCellHtml(td, rIdx, cIdx, cellData);
   return td;
@@ -1373,27 +1538,90 @@ function createGridCell(rIdx, cIdx, cellData) {
 
 function updateCellHtml(td, rIdx, cIdx, cellData) {
   if (editingCell && editingCell.row === rIdx && editingCell.col === cIdx) {
-    td.innerHTML = `<textarea id="editor_${rIdx}_${cIdx}" class="cell-editor">${cellData.text}</textarea>`;
-    const textarea = td.querySelector('textarea');
-    textarea.focus();
-    textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
-    
-    textarea.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { 
-        e.preventDefault(); 
-        saveAndMove(1, 0); 
-      }
-      else if (e.key === 'Tab') { 
-        e.preventDefault(); 
-        saveAndMove(0, e.shiftKey ? -1 : 1); 
-      }
-      else if (e.key === 'Escape') { 
-        e.preventDefault(); 
-        cancelEditing(); 
-      }
-    });
-    textarea.addEventListener('blur', () => { saveEditing(); });
-    return;
+    if (cIdx === 3) {
+      // Notes cell rich editor
+      td.innerHTML = `
+        <div class="rich-editor-wrapper">
+          <div class="rich-toolbar" contenteditable="false">
+            <button type="button" class="tb-btn bold-btn" title="Bold" onmousedown="event.preventDefault(); document.execCommand('bold', false, null); document.getElementById('editor_${rIdx}_${cIdx}').focus();">B</button>
+            <button type="button" class="tb-btn italic-btn" title="Italic" onmousedown="event.preventDefault(); document.execCommand('italic', false, null); document.getElementById('editor_${rIdx}_${cIdx}').focus();">I</button>
+            <button type="button" class="tb-btn highlight-btn" title="Highlight" onmousedown="event.preventDefault(); toggleHighlight(); document.getElementById('editor_${rIdx}_${cIdx}').focus();"><span>H</span></button>
+            <button type="button" class="tb-btn link-btn" title="Insert Link" onmousedown="event.preventDefault(); insertHyperlink();">🔗</button>
+          </div>
+          <div id="editor_${rIdx}_${cIdx}" class="cell-editor rich-editor" contenteditable="true">${cellData.text || ''}</div>
+        </div>
+      `;
+      const editor = td.querySelector('.rich-editor');
+      editor.focus();
+      selectAllContentEditable(editor);
+      
+      // Paste plain text to avoid style issues
+      editor.addEventListener('paste', e => {
+        e.preventDefault();
+        const text = e.clipboardData.getData('text/plain');
+        document.execCommand('insertText', false, text);
+      });
+      
+      editor.addEventListener('keydown', e => {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modifier = isMac ? e.metaKey : e.ctrlKey;
+        
+        if (modifier && e.key.toLowerCase() === 'h') {
+          e.preventDefault();
+          toggleHighlight();
+          editor.focus();
+        }
+        else if (modifier && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          insertHyperlink();
+        }
+        else if (e.key === 'Enter' && !e.shiftKey) { 
+          e.preventDefault(); 
+          saveAndMove(1, 0); 
+        }
+        else if (e.key === 'Tab') { 
+          e.preventDefault(); 
+          saveAndMove(0, e.shiftKey ? -1 : 1); 
+        }
+        else if (e.key === 'Escape') { 
+          e.preventDefault(); 
+          cancelEditing(); 
+        }
+      });
+      
+      editor.addEventListener('blur', () => {
+        setTimeout(() => {
+          if (document.activeElement && document.activeElement.id === `editor_${rIdx}_${cIdx}`) {
+            return;
+          }
+          saveEditing();
+        }, 150);
+      });
+      return;
+    } else {
+      // Standard plain text textarea
+      td.innerHTML = `<textarea id="editor_${rIdx}_${cIdx}" class="cell-editor">${cellData.text}</textarea>`;
+      const textarea = td.querySelector('textarea');
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+      
+      textarea.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { 
+          e.preventDefault(); 
+          saveAndMove(1, 0); 
+        }
+        else if (e.key === 'Tab') { 
+          e.preventDefault(); 
+          saveAndMove(0, e.shiftKey ? -1 : 1); 
+        }
+        else if (e.key === 'Escape') { 
+          e.preventDefault(); 
+          cancelEditing(); 
+        }
+      });
+      textarea.addEventListener('blur', () => { saveEditing(); });
+      return;
+    }
   }
   
   let imagesHtml = '';
@@ -1417,15 +1645,20 @@ function updateCellHtml(td, rIdx, cIdx, cellData) {
     ` 
     : '';
   
+  const displayVal = (cIdx === 3)
+    ? (cellData.text || '')
+    : (cellData.text ? escHtml(cellData.text) : '');
+
   td.innerHTML = `
     <div class="cell-content-wrapper">
-      <div style="flex:1; white-space:pre-wrap; word-break:break-word; min-height:16px;">${cellData.text ? escHtml(cellData.text) : ''}</div>
+      <div class="notes-content-display" style="flex:1; white-space:pre-wrap; word-break:break-word; min-height:16px;">${displayVal}</div>
       ${imagesHtml}
       ${addImageBtnHtml}
     </div>`;
 }
 
 function handleCellClick(row, col, e) {
+  if (e.target.closest('a')) return;
   if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.cell-image-thumb-wrapper')) return;
   if (editingCell && (editingCell.row !== row || editingCell.col !== col)) saveEditing();
   selectedCell = { row, col };
@@ -1455,41 +1688,32 @@ function startEditing(row, col, initialChar = null) {
     // Lock the cell height to avoid row collapse during absolute editor stretch
     td.style.height = td.offsetHeight + 'px';
     
-    td.innerHTML = `<textarea id="editor_${row}_${col}" class="cell-editor">${val}</textarea>`;
-    const textarea = td.querySelector('textarea');
-    textarea.focus();
-    if (initialChar === null) {
-      textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
-    } else {
-      textarea.selectionStart = textarea.selectionEnd = 1;
-    }
-    
-    textarea.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { 
-        e.preventDefault(); 
-        saveAndMove(1, 0); 
-      }
-      else if (e.key === 'Tab') { 
-        e.preventDefault(); 
-        saveAndMove(0, e.shiftKey ? -1 : 1); 
-      }
-      else if (e.key === 'Escape') { 
-        e.preventDefault(); 
-        cancelEditing(); 
-      }
-    });
-    textarea.addEventListener('blur', () => { saveEditing(); });
+    updateCellHtml(td, row, col, { ...cellData, text: val });
   }
 }
 
 function saveEditing() {
   if (!editingCell) return;
   const { row, col } = editingCell;
-  const textarea = document.getElementById(`editor_${row}_${col}`);
-  if (textarea) {
-    getCellData(row, col).text = textarea.value;
-    updateProgress();
+  let textVal = '';
+  
+  if (col === 3) {
+    const editor = document.getElementById(`editor_${row}_${col}`);
+    if (editor) {
+      const html = editor.innerHTML;
+      const cleanHtml = html.replace(/^(<br>|<div><br><\/div>|<p><br><\/p>|&nbsp;|\s)+$/gi, '');
+      textVal = (cleanHtml === '') ? '' : html;
+    }
+  } else {
+    const textarea = document.getElementById(`editor_${row}_${col}`);
+    if (textarea) {
+      textVal = textarea.value;
+    }
   }
+  
+  getCellData(row, col).text = textVal;
+  updateProgress();
+  
   editingCell = null;
   const td = document.getElementById(`cell_${row}_${col}`);
   if (td) {
