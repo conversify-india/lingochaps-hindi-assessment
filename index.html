@@ -873,6 +873,10 @@
     .tb-btn.italic-btn {
       font-style: italic;
     }
+    .tb-btn.underline-btn {
+      text-decoration: underline;
+      font-weight: 600;
+    }
     .tb-btn.highlight-btn span {
       border-bottom: 3px solid #fef08a;
       line-height: 1;
@@ -1546,6 +1550,7 @@ function updateCellHtml(td, rIdx, cIdx, cellData) {
           <div class="rich-toolbar" contenteditable="false">
             <button type="button" class="tb-btn bold-btn" title="Bold" onmousedown="event.preventDefault(); document.execCommand('bold', false, null); document.getElementById('editor_${rIdx}_${cIdx}').focus();">B</button>
             <button type="button" class="tb-btn italic-btn" title="Italic" onmousedown="event.preventDefault(); document.execCommand('italic', false, null); document.getElementById('editor_${rIdx}_${cIdx}').focus();">I</button>
+            <button type="button" class="tb-btn underline-btn" title="Underline" onmousedown="event.preventDefault(); document.execCommand('underline', false, null); document.getElementById('editor_${rIdx}_${cIdx}').focus();">U</button>
             <button type="button" class="tb-btn highlight-btn" title="Highlight" onmousedown="event.preventDefault(); toggleHighlight(); document.getElementById('editor_${rIdx}_${cIdx}').focus();"><span>H</span></button>
             <button type="button" class="tb-btn link-btn" title="Insert Link" onmousedown="event.preventDefault(); insertHyperlink();">🔗</button>
           </div>
@@ -1567,7 +1572,12 @@ function updateCellHtml(td, rIdx, cIdx, cellData) {
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
         const modifier = isMac ? e.metaKey : e.ctrlKey;
         
-        if (modifier && e.key.toLowerCase() === 'h') {
+        if (modifier && e.key.toLowerCase() === 'u') {
+          e.preventDefault();
+          document.execCommand('underline', false, null);
+          editor.focus();
+        }
+        else if (modifier && e.key.toLowerCase() === 'h') {
           e.preventDefault();
           toggleHighlight();
           editor.focus();
