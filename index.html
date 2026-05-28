@@ -1061,10 +1061,7 @@
     <div id="breakdownList"></div>
 
     <div class="send-sheet-section">
-      <h3>📊 Send Results to Google Sheets</h3>
-      <p>Your score will be automatically logged with your name, timestamp, and row-by-row details.</p>
-      <button class="btn-sheet" onclick="sendToSheet()">Send to Google Sheets →</button>
-      <div id="sheetStatus"></div>
+      <div id="sheetStatus" style="display: block; font-size: 14px; font-weight: 600; padding: 12px 16px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); text-align: center;"></div>
     </div>
   </div>
 <!-- ─── IMAGE ANNOTATION MODAL ─── -->
@@ -1477,25 +1474,94 @@ function selectAllContentEditable(el) {
 function toggleHighlight() {
   const selection = window.getSelection();
   if (!selection.rangeCount) return;
-  const range = selection.getRangeAt(0);
-  let parent = range.commonAncestorContainer;
-  if (parent.nodeType === 3) parent = parent.parentNode;
   
-  // Check if selection already has highlight
-  let hasHighlight = false;
-  let curr = parent;
+  const range = selection.getRangeAt(0);
   const editor = document.activeElement;
-  while (curr && curr !== editor) {
-    if (curr.nodeType === 1 && (curr.style.backgroundColor === 'rgb(254, 240, 138)' || curr.style.backgroundColor === '#fef08a')) {
+  if (!editor || !editor.classList.contains('rich-editor')) return;
+  
+  // Check if selection already has highlight (yellow)
+  let hasHighlight = false;
+  try {
+    const val = document.queryCommandValue('backColor');
+    if (val === 'rgb(254, 240, 138)' || val === '#fef08a' || val === 'yellow') {
       hasHighlight = true;
-      break;
     }
-    curr = curr.parentNode;
+  } catch (e) {}
+  
+  if (!hasHighlight) {
+    let parent = range.commonAncestorContainer;
+    if (parent.nodeType === 3) parent = parent.parentNode;
+    let curr = parent;
+    while (curr && curr !== editor) {
+      if (curr.nodeType === 1 && (curr.style.backgroundColor === 'rgb(254, 240, 138)' || curr.style.backgroundColor === '#fef08a' || curr.style.backgroundColor === 'yellow')) {
+        hasHighlight = true;
+        break;
+      }
+      curr = curr.parentNode;
+    }
   }
   
+  // Collapsed selection handling (while typing)
+  if (selection.isCollapsed) {
+    if (hasHighlight) {
+      // The cursor is inside a highlighted span. Move it out.
+      let parent = range.startContainer;
+      if (parent.nodeType === 3) parent = parent.parentNode;
+      let yellowSpan = null;
+      let curr = parent;
+      while (curr && curr !== editor) {
+        if (curr.nodeType === 1 && (curr.style.backgroundColor === 'rgb(254, 240, 138)' || curr.style.backgroundColor === '#fef08a' || curr.style.backgroundColor === 'yellow')) {
+          yellowSpan = curr;
+          break;
+        }
+        curr = curr.parentNode;
+      }
+      
+      if (yellowSpan) {
+        const textNode = range.startContainer;
+        const offset = range.startOffset;
+        const nextText = document.createTextNode('\u200B'); // zero-width space
+        
+        if (textNode.nodeType === 3) {
+          const afterText = textNode.splitText(offset);
+          if (afterText.textContent.length === 0) {
+            yellowSpan.parentNode.insertBefore(nextText, yellowSpan.nextSibling);
+          } else {
+            const nextSpan = yellowSpan.cloneNode(false);
+            yellowSpan.parentNode.insertBefore(nextSpan, yellowSpan.nextSibling);
+            
+            let nextSibling = afterText;
+            while (nextSibling) {
+              let toMove = nextSibling;
+              nextSibling = nextSibling.nextSibling;
+              nextSpan.appendChild(toMove);
+            }
+            
+            yellowSpan.parentNode.insertBefore(nextText, nextSpan);
+          }
+        } else {
+          yellowSpan.parentNode.insertBefore(nextText, yellowSpan.nextSibling);
+        }
+        
+        const newRange = document.createRange();
+        newRange.setStart(nextText, 1);
+        newRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
+    } else {
+      // Turn on highlight
+      document.execCommand('backColor', false, '#fef08a');
+    }
+    return;
+  }
+  
+  // Selection has text
   if (hasHighlight) {
-    document.execCommand('backColor', false, 'transparent');
+    // Set background color to white to mask/un-highlight the selection
+    document.execCommand('backColor', false, '#ffffff');
   } else {
+    // Apply highlight (yellow)
     document.execCommand('backColor', false, '#fef08a');
   }
 }
@@ -1530,6 +1596,10 @@ function insertHyperlink() {
 function createGridCell(rIdx, cIdx, cellData) {
   const td = document.createElement('td');
   td.className = 'grid-cell';
+  if (cIdx === 1) td.classList.add('wfw-cell');
+  else if (cIdx === 2) td.classList.add('ost-cell');
+  else if (cIdx === 3) td.classList.add('notes-cell');
+  
   td.id = `cell_${rIdx}_${cIdx}`;
   td.onclick = (e) => handleCellClick(rIdx, cIdx, e);
   td.ondblclick = (e) => {
@@ -1658,7 +1728,9 @@ function updateCellHtml(td, rIdx, cIdx, cellData) {
   
   const displayVal = (cIdx === 3)
     ? (cellData.text || '')
-    : (cellData.text ? escHtml(cellData.text) : '');
+    : (cIdx === 1)
+      ? formatWfWHtml(cellData.text)
+      : (cellData.text ? escHtml(cellData.text) : '');
 
   td.innerHTML = `
     <div class="cell-content-wrapper">
@@ -1711,7 +1783,7 @@ function saveEditing() {
   if (col === 3) {
     const editor = document.getElementById(`editor_${row}_${col}`);
     if (editor) {
-      const html = editor.innerHTML;
+      const html = editor.innerHTML.replace(/\u200B/g, '');
       const cleanHtml = html.replace(/^(<br>|<div><br><\/div>|<p><br><\/p>|&nbsp;|\s)+$/gi, '');
       textVal = (cleanHtml === '') ? '' : html;
     }
@@ -1780,6 +1852,16 @@ function clearCellText(row, col) {
 function escHtml(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+function formatWfWHtml(text) {
+  if (!text) return '';
+  let escaped = escHtml(text);
+  return escaped.split('<br>').map(line => {
+    let formatted = line.replace(/^([^:\n\t&<\[\]]{2,60}):/, '<strong>$1:</strong>');
+    formatted = formatted.replace(/(\[[^\]]+\])/g, '<strong>$1</strong>');
+    return formatted;
+  }).join('<br>');
 }
 
 function updateProgress() {
@@ -2245,22 +2327,24 @@ function scoreTest() {
 // ─────────────────────────────────────────────
 // GOOGLE SHEETS
 // ─────────────────────────────────────────────
-const SHEET_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzbIqmUj7Pu-_YWVns9ZNP14qQx0usyHq5PqkosORww1dVe1ulJt5St7Z-O03iEMRR6/exec';
 
 function sendToSheet() {
   const d = window._scoreData;
   if (!d) return;
 
-  const btn = document.querySelector('.btn-sheet');
-  btn.textContent = 'Sending…';
-  btn.disabled = true;
+  const statusDiv = document.getElementById('sheetStatus');
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.innerHTML = '<span style="color: var(--accent); font-weight: 600;">⏳ Syncing results to Google Sheets...</span>';
+  }
 
   const payload = {
     name: candidateName,
     submittedAt: new Date().toISOString(),
     timeTaken: d.timeStr,
-    totalScore: d.totalScore,
-    maxScore: d.maxScore,
+    totalScore: d.pct,
+    maxScore: 100,
     percentage: d.pct,
     grade: d.grade,
     rows: d.results.map((r, i) => {
@@ -2294,17 +2378,14 @@ function sendToSheet() {
     body: JSON.stringify(payload)
   })
   .then(() => {
-    document.getElementById('sheetStatus').style.display = 'block';
-    document.getElementById('sheetStatus').innerHTML =
-      '<span class="sheet-ok">✅ Results sent to Google Sheets successfully!</span>';
-    btn.textContent = 'Sent ✓';
+    if (statusDiv) {
+      statusDiv.innerHTML = '<span class="sheet-ok" style="color: #22c55e; font-weight: 600;">✅ Results logged to Google Sheets successfully!</span>';
+    }
   })
   .catch(err => {
-    document.getElementById('sheetStatus').style.display = 'block';
-    document.getElementById('sheetStatus').innerHTML =
-      '<span class="sheet-err">❌ Failed to send. Please contact admin. (' + err.message + ')</span>';
-    btn.textContent = 'Retry';
-    btn.disabled = false;
+    if (statusDiv) {
+      statusDiv.innerHTML = '<span class="sheet-err" style="color: var(--red); font-weight: 600;">❌ Failed to sync to Google Sheets. (' + err.message + ')</span>';
+    }
   });
 }
 
@@ -2328,7 +2409,7 @@ function submitTest() {
 
   document.getElementById('resultMeta').textContent =
     `Candidate: ${candidateName} · Submitted: ${new Date().toLocaleString()}`;
-  document.getElementById('resTotal').textContent = `${totalScore}/${maxScore}`;
+  document.getElementById('resTotal').textContent = `${pct}/100`;
   document.getElementById('resPct').textContent = `${pct}%`;
   document.getElementById('resMissed').textContent = missed;
   document.getElementById('resTime').textContent = timeStr;
@@ -2392,6 +2473,7 @@ function submitTest() {
   });
 
   window._scoreData = { results, totalScore, maxScore, pct, timeStr, grade, label };
+  sendToSheet();
 }
 
 function toggleBreakdown(i) {
