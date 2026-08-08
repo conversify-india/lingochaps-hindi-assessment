@@ -543,29 +543,145 @@
       white-space: pre-line;
     }
 
-    .comment-cell textarea {
+    .comment-cell {
+      vertical-align: top;
+      width: 220px;
+    }
+
+    .comment-cards-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       width: 100%;
+    }
+
+    .comment-card {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .comment-card.active-card, .comment-card:hover {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+
+    .comment-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .comment-badge-pill {
+      background: #fef08a;
+      color: #854d0e;
+      border: 1px solid #f59e0b;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .comment-target-quote {
+      font-size: 11px;
+      color: #d97706;
+      background: rgba(245, 158, 11, 0.08);
+      border-left: 3px solid #f59e0b;
+      padding: 3px 6px;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 6px;
+      font-style: italic;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .comment-card textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px;
       color: var(--text);
       font-family: 'Inter', sans-serif;
       font-size: 12px;
-      line-height: 1.6;
+      line-height: 1.4;
       resize: vertical;
-      min-height: 72px;
+      min-height: 48px;
       outline: none;
       transition: border-color .2s;
     }
 
-    .comment-cell textarea:focus {
+    .comment-card textarea:focus {
       border-color: var(--accent);
     }
 
-    .comment-cell textarea::placeholder {
+    .comment-card-delete-btn {
+      background: none;
+      border: none;
       color: var(--muted);
-      opacity: .7;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .comment-card-delete-btn:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Comment Anchor tags in WfW, OST, Notes */
+    .comment-anchor {
+      background-color: #fef08a;
+      border-bottom: 2px dashed #f59e0b;
+      padding: 1px 3px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .comment-anchor:hover, .comment-anchor.active-anchor {
+      background-color: #fde047;
+      box-shadow: 0 0 0 2px #d97706;
+    }
+
+    .comment-badge {
+      font-size: 10px;
+      font-weight: 800;
+      color: #854d0e;
+      margin-left: 2px;
+      vertical-align: super;
+      user-select: none;
+    }
+
+    .btn-add-comment-anchor {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #fef08a;
+      color: #854d0e;
+      border: 1px solid #f59e0b;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 4px;
+    }
+
+    .btn-add-comment-anchor:hover {
+      background: #fde047;
+      transform: translateY(-1px);
     }
 
     /* Answered indicator */
@@ -1924,7 +2040,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         wfw: { text: row.wfw, images: [] },
         ost: { text: row.ost || "", images: [] },
         notes: { text: row.notes || "", images: [] },
-        comment: { text: "", images: [] }
+        comment: { text: "", images: [], items: [] }
       }));
 
       let selectedCell = { row: 0, col: 1 };
@@ -1935,6 +2051,165 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
       let annotationCanvas = null;
       let annotationCtx = null;
       let canvasImageElement = null;
+
+      // ─────────────────────────────────────────────
+      // WORD-STYLE INLINE TEXT COMMENT ANCHORING & CARDS
+      // ─────────────────────────────────────────────
+      function renderCommentCardsHtml(rIdx) {
+        const rowObj = gridData[rIdx];
+        const commentData = rowObj.comment || { text: "", items: [] };
+        const items = commentData.items || [];
+
+        let cardsHtml = `<div class="comment-cards-wrapper">`;
+
+        items.forEach((item) => {
+          const colName = item.cellCol === 1 ? 'WfW' : item.cellCol === 2 ? 'OST' : 'Notes';
+          cardsHtml += `
+            <div class="comment-card" id="card_${item.id}" onmouseenter="highlightAnchor('${item.id}')" onmouseleave="unhighlightAnchor('${item.id}')">
+              <div class="comment-card-header">
+                <span class="comment-badge-pill">[${item.badge}] ${colName} Comment</span>
+                <button type="button" class="comment-card-delete-btn" onclick="deleteInlineComment(${rIdx}, '${item.id}', event)" title="Remove comment anchor">&times;</button>
+              </div>
+              <div class="comment-target-quote" title="${escHtml(item.targetText)}">"${escHtml(item.targetText)}"</div>
+              <textarea placeholder="Type comment about this selection..." oninput="updateInlineCommentText(${rIdx}, '${item.id}', this.value)" onfocus="highlightAnchor('${item.id}')" onblur="unhighlightAnchor('${item.id}')">${escHtml(item.text || '')}</textarea>
+            </div>
+          `;
+        });
+
+        cardsHtml += `
+          <div class="comment-card">
+            <div class="comment-card-header">
+              <span>💬 Segment Comment</span>
+            </div>
+            <textarea placeholder="Overall comment for this row..." oninput="updateGeneralCommentText(${rIdx}, this.value)">${escHtml(commentData.text || '')}</textarea>
+          </div>
+        `;
+
+        cardsHtml += `
+          <button type="button" class="btn-add-comment-anchor" onclick="addCommentToSelectedText(${rIdx}, event)">
+            💬 Comment on Selected Text
+          </button>
+        </div>`;
+
+        return cardsHtml;
+      }
+
+      function addCommentToSelectedText(rIdx, e) {
+        if (e) e.stopPropagation();
+        const sel = window.getSelection();
+        const selectedText = sel ? sel.toString().trim() : '';
+
+        if (!selectedText) {
+          alert('Please select/highlight any text in WfW, OST, or Notes column first, then click "Comment on Selected Text".');
+          return;
+        }
+
+        let col = 1;
+        if (sel.rangeCount > 0) {
+          const node = sel.getRangeAt(0).commonAncestorContainer;
+          const cellTd = node.nodeType === 1 ? node.closest('td') : (node.parentNode ? node.parentNode.closest('td') : null);
+          if (cellTd && cellTd.id) {
+            const parts = cellTd.id.split('_');
+            if (parts.length >= 3) {
+              const rowNum = parseInt(parts[1], 10);
+              const colNum = parseInt(parts[2], 10);
+              if (rowNum === rIdx && (colNum >= 1 && colNum <= 3)) {
+                col = colNum;
+              }
+            }
+          }
+        }
+
+        const commentData = gridData[rIdx].comment;
+        if (!commentData.items) commentData.items = [];
+        const badgeNum = commentData.items.length + 1;
+        const commentId = `c_${rIdx}_${col}_${Date.now()}`;
+
+        const anchorHtml = `<mark class="comment-anchor" id="anchor_${commentId}" onclick="focusCommentCard(${rIdx}, '${commentId}')" onmouseenter="highlightCommentCard('${commentId}')" onmouseleave="unhighlightCommentCard('${commentId}')">${escHtml(selectedText)}<sup class="comment-badge">[${badgeNum}]</sup></mark>`;
+
+        try {
+          document.execCommand('insertHTML', false, anchorHtml);
+        } catch (err) {}
+
+        commentData.items.push({
+          id: commentId,
+          badge: badgeNum,
+          targetText: selectedText,
+          cellCol: col,
+          text: ''
+        });
+
+        if (editingCell) saveEditing();
+
+        const tdComment = document.getElementById(`cell_${rIdx}_4`);
+        if (tdComment) updateCellHtml(tdComment, rIdx, 4, commentData);
+
+        setTimeout(() => {
+          const cardArea = document.querySelector(`#card_${commentId} textarea`);
+          if (cardArea) cardArea.focus();
+        }, 100);
+      }
+
+      function highlightAnchor(commentId) {
+        const el = document.getElementById(`anchor_${commentId}`);
+        if (el) el.classList.add('active-anchor');
+        const card = document.getElementById(`card_${commentId}`);
+        if (card) card.classList.add('active-card');
+      }
+
+      function unhighlightAnchor(commentId) {
+        const el = document.getElementById(`anchor_${commentId}`);
+        if (el) el.classList.remove('active-anchor');
+        const card = document.getElementById(`card_${commentId}`);
+        if (card) card.classList.remove('active-card');
+      }
+
+      function highlightCommentCard(commentId) {
+        highlightAnchor(commentId);
+      }
+
+      function unhighlightCommentCard(commentId) {
+        unhighlightAnchor(commentId);
+      }
+
+      function focusCommentCard(rIdx, commentId) {
+        highlightAnchor(commentId);
+        const cardArea = document.querySelector(`#card_${commentId} textarea`);
+        if (cardArea) {
+          cardArea.focus();
+          cardArea.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      }
+
+      function deleteInlineComment(rIdx, commentId, e) {
+        if (e) e.stopPropagation();
+        const commentData = gridData[rIdx].comment;
+        if (commentData.items) {
+          commentData.items = commentData.items.filter(item => item.id !== commentId);
+        }
+        const anchorEl = document.getElementById(`anchor_${commentId}`);
+        if (anchorEl) {
+          const textNode = document.createTextNode(anchorEl.textContent.replace(/\[\d+\]$/, ''));
+          anchorEl.parentNode.replaceChild(textNode, anchorEl);
+        }
+        const tdComment = document.getElementById(`cell_${rIdx}_4`);
+        if (tdComment) updateCellHtml(tdComment, rIdx, 4, commentData);
+        updateProgress();
+      }
+
+      function updateInlineCommentText(rIdx, commentId, val) {
+        const commentData = gridData[rIdx].comment;
+        if (commentData.items) {
+          const item = commentData.items.find(x => x.id === commentId);
+          if (item) item.text = val;
+        }
+        updateProgress();
+      }
+
+      function updateGeneralCommentText(rIdx, val) {
+        gridData[rIdx].comment.text = val;
+        updateProgress();
+      }
 
       // ─────────────────────────────────────────────
       // START TEST
@@ -2241,6 +2516,11 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         </div>`;
           });
           imagesHtml += `</div>`;
+        }
+
+        if (cIdx === 4) {
+          td.innerHTML = renderCommentCardsHtml(rIdx);
+          return;
         }
 
         const addImageBtnHtml = (cIdx === 2)
@@ -3053,12 +3333,21 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
                 });
               });
             }
+            const itemCommentsStr = (rowObj.comment.items || [])
+              .map(item => `[${item.badge}] "${item.targetText}": ${item.text || ''}`)
+              .join(' | ');
+
+            const fullCandidateComment = [
+              itemCommentsStr,
+              rowObj.comment.text ? `[General]: ${rowObj.comment.text}` : ''
+            ].filter(Boolean).join('\n');
+
             return {
               timestamp: r.timestamp.replace(/\n/g, ' '),
               wfwText: rowObj.wfw.text,
               ostText: rowObj.ost.text,
               notesText: rowObj.notes.text,
-              candidateComment: rowObj.comment.text || '',
+              candidateComment: fullCandidateComment,
               comment: r.comment,
               ostImages: rowImages,
               score: r.score,

@@ -51,12 +51,12 @@ function getSpreadsheet_() {
   let ss = null;
   try {
     ss = SpreadsheetApp.getActiveSpreadsheet();
-  } catch (e1) {}
+  } catch (e1) { }
 
   if (!ss && SPREADSHEET_ID) {
     try {
       ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    } catch (e2) {}
+    } catch (e2) { }
   }
   return ss;
 }
