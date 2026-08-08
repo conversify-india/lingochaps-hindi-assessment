@@ -50,11 +50,97 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 48px 40px;
-      max-width: 500px;
+      padding: 48px 48px 40px;
+      max-width: 880px;
       width: 100%;
       text-align: center;
       box-shadow: 0 24px 80px rgba(108, 99, 255, 0.15);
+    }
+
+    .splash-guide-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 24px 0;
+      text-align: left;
+    }
+
+    .splash-guide-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .splash-guide-card h4 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .splash-guide-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .splash-guide-card ul li {
+      font-size: 12.5px;
+      color: var(--muted);
+      padding-left: 12px;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .splash-guide-card ul li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+
+    .splash-guide-card ul li strong {
+      color: var(--text);
+    }
+
+    .splash-timer-notice {
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(139, 92, 246, 0.08));
+      border: 1px solid rgba(79, 70, 229, 0.25);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .splash-col-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .splash-col-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid;
     }
 
     .splash-logo {
@@ -1532,14 +1618,83 @@
         <div class="info-pill"><strong>5 Columns</strong>Per Row</div>
       </div>
 
-      <ul class="rules-list">
-        <li>Watch and review the video: <a href="https://www.youtube.com/watch?v=VQ81mP7p0W4" target="_blank"
-            style="color: var(--accent); font-weight: bold; text-decoration: underline;">Open YouTube Video ↗</a>.</li>
-        <li>Each row is pre-filled — <strong>check it carefully</strong> against the video.</li>
-        <li>If something is wrong in WfW, OST, or Notes — write a comment in the Comments column.</li>
-        <li>No translation required — only verification &amp; error-spotting.</li>
-        <li>Timer starts the moment you enter your name and begin.</li>
-      </ul>
+      <!-- Timer notice -->
+      <div class="splash-timer-notice">
+        ⏱ Timer starts immediately when you click "Start Assessment". You have <strong>2 hours 30 minutes</strong> to complete all 15 segments. The timer turns yellow under 30 min and red under 10 min.
+      </div>
+
+      <!-- Column legend pills -->
+      <div class="splash-col-pills">
+        <span class="splash-col-pill" style="background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;">⏱ Timestamp</span>
+        <span class="splash-col-pill" style="background:#f0fdf4;border-color:#22c55e;color:#15803d;">✍️ WfW Translation <em style='font-weight:400'>(read-only)</em></span>
+        <span class="splash-col-pill" style="background:#faf5ff;border-color:#a855f7;color:#7e22ce;">🖥 OST</span>
+        <span class="splash-col-pill" style="background:#fffbeb;border-color:#f59e0b;color:#b45309;">📎 Notes</span>
+        <span class="splash-col-pill" style="background:#fefdf0;border-color:#eab308;color:#854d0e;">💬 Comments</span>
+      </div>
+
+      <div class="splash-guide-grid">
+        <div class="splash-guide-card">
+          <h4 style="color:#1d4ed8;">✍️ Column 1: WfW Translation</h4>
+          <ul>
+            <li><strong>Read-only</strong> — you cannot type into this column.</li>
+            <li>Listen to the video audio and compare each sentence carefully.</li>
+            <li>If you spot an error, <strong>select the wrong word/phrase with your mouse</strong> in the WfW cell.</li>
+            <li>Then click <strong>💬 Comment on Selected Text</strong> in Column 5 to anchor a comment to it.</li>
+          </ul>
+        </div>
+        <div class="splash-guide-card">
+          <h4 style="color:#7e22ce;">🖥 Column 2: OST (On-Screen Text)</h4>
+          <ul>
+            <li>Capture all visible text overlays, watermarks, banners, and subtitles shown in the video.</li>
+            <li><strong>Double-click or press Enter</strong> on the OST cell to start typing.</li>
+            <li><strong>Paste screenshots</strong> directly using Ctrl+V (Windows) / Cmd+V (Mac).</li>
+            <li>Or click <strong>📷 Add Image</strong> to upload an image file.</li>
+            <li>Click <strong>✏️ Edit</strong> on any image to draw annotations, shapes, or rotate.</li>
+          </ul>
+        </div>
+        <div class="splash-guide-card">
+          <h4 style="color:#b45309;">📎 Column 3: Notes &amp; References</h4>
+          <ul>
+            <li>Add reference context for proper nouns, religious terms, places, or clothing mentioned.</li>
+            <li><strong>Double-click or press Enter</strong> to open the rich text editor.</li>
+            <li>Use the toolbar: <strong>B</strong> Bold · <strong>I</strong> Italic · <strong>U</strong> Underline · <strong>H</strong> Highlight · <strong>🔗</strong> Insert Link.</li>
+            <li>You can paste Wikipedia or other reference links directly.</li>
+          </ul>
+        </div>
+        <div class="splash-guide-card">
+          <h4 style="color:#854d0e;">💬 Column 5: Comments</h4>
+          <ul>
+            <li>Each row has a <strong>Segment Comment</strong> box — write any overall observation here.</li>
+            <li>To link a comment to a specific WfW word: first select text in Column 1, then click <strong>💬 Comment on Selected Text</strong>.</li>
+            <li>Linked comment cards appear with a badge like <strong>[1]</strong>, <strong>[2]</strong>.</li>
+            <li>Hover over a card to highlight its anchor in the WfW cell. Click <strong>×</strong> to delete.</li>
+          </ul>
+        </div>
+        <div class="splash-guide-card" style="grid-column: 1 / -1;">
+          <h4 style="color:#4f46e5;">⌨️ Navigation &amp; Keyboard Shortcuts</h4>
+          <ul style="display: grid; grid-template-columns: 1fr 1fr; gap:5px 24px;">
+            <li><strong>Click</strong> any cell to select it.</li>
+            <li><strong>Double-click / Enter</strong> to start editing a cell.</li>
+            <li><strong>Tab / Shift+Tab</strong> to move right / left between columns.</li>
+            <li><strong>Arrow keys</strong> to navigate between rows and columns.</li>
+            <li><strong>Shift+Enter</strong> to insert a line break while editing.</li>
+            <li><strong>Esc</strong> to cancel changes and exit editing.</li>
+            <li><strong>Ctrl+V / Cmd+V</strong> to paste a screenshot into OST cells.</li>
+            <li><strong>Ctrl+B/I/U/H/K</strong> for formatting in Notes editor.</li>
+          </ul>
+        </div>
+        <div class="splash-guide-card" style="grid-column: 1 / -1; background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.3);">
+          <h4 style="color:#ef4444;">⚠️ Important Rules &amp; Scoring</h4>
+          <ul style="display: grid; grid-template-columns: 1fr 1fr; gap:5px 24px;">
+            <li>This is a <strong>verification test</strong> — no translation needed.</li>
+            <li><strong>Do not type random or gibberish text</strong> — it will score 0.</li>
+            <li>Answers are scored against a reference sheet by keyword matching.</li>
+            <li>Partial but relevant answers may receive partial marks.</li>
+            <li>Completely unrelated answers score 0 regardless of length.</li>
+            <li>Submit only when all 15 segments have been reviewed.</li>
+          </ul>
+        </div>
+      </div>
 
       <div class="field-label">YOUR FULL NAME</div>
       <input id="nameInput" type="text" placeholder="Enter your name to begin…" autocomplete="off" />
