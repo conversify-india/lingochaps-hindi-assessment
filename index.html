@@ -2825,6 +2825,56 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         }, 1000);
       }
 
+      // ─────────────────────────────────────────────
+      // GIBBERISH DETECTION
+      // Returns true if the provided text appears to be keyboard mash / nonsense.
+      // Called on every user-typed field before keyword scoring.
+      // ─────────────────────────────────────────────
+      function isGibberish(text) {
+        if (!text || !text.trim()) return false;
+        const t = text.trim();
+
+        // 1. High ratio of special / bracket characters  →  clearly not real content
+        const specialCount = (t.match(/[\[\]{};:'"\\\/\|<>!@#$%^&*()+=~`]/g) || []).length;
+        if (specialCount > 0 && specialCount / t.length >= 0.20) return true;
+
+        // 2. Bracket clusters of 2+ (e.g. [[ ]] ;[] ][)
+        if (/[\[\]\{\}]{2,}/.test(t)) return true;
+
+        // 3. Extract alpha-only words and check for gibberish patterns
+        const alphaWords = t.match(/[a-z]{3,}/gi) || [];
+        if (alphaWords.length === 0 && t.replace(/\s/g, '').length > 3) {
+          // Non-empty content with no real words at all → gibberish
+          return true;
+        }
+
+        let gibCount = 0;
+        for (const w of alphaWords) {
+          const wl = w.toLowerCase();
+          // 4+ consecutive consonants (keyboard mash: ghjkl, bbvght, dgrsfg…)
+          if (/[bcdfghjklmnpqrstvwxyz]{5,}/.test(wl)) { gibCount++; continue; }
+          // Keyboard-row mash patterns
+          if (/fghj|ghjk|hjkl|asdf|qwer|yuio|zxcv|vbnm|rtyu/.test(wl)) { gibCount++; continue; }
+          // Repeated-letter runs  (aaaa / eeerr)
+          if (/(.)\1{3,}/.test(wl)) { gibCount++; continue; }
+        }
+
+        // 5. Alphanumeric mix that looks like hash / random key  (e.g. eerrwt578, poi9u8u776…)
+        const alphaNumWords = t.match(/[a-z0-9]{4,}/gi) || [];
+        let alphaNumGib = 0;
+        for (const w of alphaNumWords) {
+          if (/[a-z]{2,}[0-9]{3,}|[0-9]{3,}[a-z]{2,}|[a-z]+[0-9]+[a-z]+[0-9]+/.test(w.toLowerCase())) {
+            alphaNumGib++;
+          }
+        }
+        if (alphaNumWords.length > 0 && alphaNumGib / alphaNumWords.length >= 0.5) return true;
+
+        // If more than half of the alpha words look like gibberish → reject
+        if (alphaWords.length > 0 && gibCount / alphaWords.length >= 0.5) return true;
+
+        return false;
+      }
+
       function scoreTest() {
         const results = [];
         let totalScore = 0;
@@ -2844,37 +2894,58 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
             // Unedited row: 0 points if issues were expected, 6 points if no issues expected
             rowScore = (issues.length === 0) ? 6 : 0;
           } else {
-            // Candidate edited this row. Evaluate ONLY candidate's typed text & additions (ostTyped + notesTyped + wfwDiff), excluding pre-filled WORK_DATA
-            let wfwDiff = "";
-            if (isWfwEdited) {
+            // ── Gibberish guard ──────────────────────────────────────
+            // If every user-typed field contains only gibberish, score 0 immediately.
+            const wfwAddedRaw = (() => {
+              if (!isWfwEdited) return "";
               const origWords = new Set((WORK_DATA[i].wfw || "").toLowerCase().match(/[a-z0-9]+/g) || []);
-              const currentWords = (data.wfw.text || "").toLowerCase().match(/[a-z0-9]+/g) || [];
-              const addedWords = currentWords.filter(w => !origWords.has(w));
-              wfwDiff = addedWords.join(" ");
-            }
+              const curWords = (data.wfw.text || "").toLowerCase().match(/[a-z0-9]+/g) || [];
+              return curWords.filter(w => !origWords.has(w)).join(" ");
+            })();
 
-            const userContent = (ostTyped + " " + notesTyped + " " + wfwDiff).toLowerCase().trim();
+            const ostIsGib   = ostTyped   !== "" && isGibberish(ostTyped);
+            const notesIsGib = notesTyped !== "" && isGibberish(notesTyped);
+            const wfwIsGib   = wfwAddedRaw !== "" && isGibberish(wfwAddedRaw);
 
-            // Extract target reference keywords from ref_ost, ref_notes, comment_ost, comment_notes, expected_issues
-            const refText = ((key.ref_ost || "") + " " + (key.ref_notes || "") + " " + (key.comment_ost || "") + " " + (key.comment_notes || "") + " " + issues.join(" ")).toLowerCase();
-            const stopWords = new Set(["the", "and", "this", "that", "there", "with", "from", "for", "are", "was", "were", "been", "have", "has", "had", "should", "must", "also", "into", "than", "then", "only", "present", "missing", "added", "video", "text"]);
-            const refWords = Array.from(new Set(refText.match(/[a-z0-9]{3,}/g) || [])).filter(w => !stopWords.has(w));
+            // All non-empty fields are gibberish → 0
+            const allFieldsGibberish = (
+              (ostTyped   === "" || ostIsGib) &&
+              (notesTyped === "" || notesIsGib) &&
+              (wfwAddedRaw === "" || wfwIsGib) &&
+              !hasImages
+            );
 
-            const userWords = userContent.match(/[a-z0-9]{3,}/g) || [];
-            const matchingWords = userWords.filter(w => refWords.includes(w));
-
-            if (userWords.length === 0 || matchingWords.length === 0) {
-              // Candidate typed gibberish or nonsense (e.g. "weird", "asdf", "werds") -> 0 points
+            if (allFieldsGibberish && !hasImages) {
               rowScore = 0;
             } else {
-              const uniqueMatches = new Set(matchingWords).size;
-              const targetCount = Math.min(refWords.length, 3);
-              const ratio = uniqueMatches / Math.max(targetCount, 1);
+              // ── Keyword matching ─────────────────────────────────────
+              // Only use non-gibberish portions for matching
+              const cleanOst   = ostIsGib   ? "" : ostTyped;
+              const cleanNotes = notesIsGib ? "" : notesTyped;
+              const cleanWfw   = wfwIsGib   ? "" : wfwAddedRaw;
 
-              if (ratio >= 0.75) rowScore = 6;
-              else if (ratio >= 0.5) rowScore = 4;
-              else if (ratio >= 0.25) rowScore = 2;
-              else rowScore = 0;
+              const userContent = (cleanOst + " " + cleanNotes + " " + cleanWfw).toLowerCase().trim();
+
+              // Extract target reference keywords
+              const refText = ((key.ref_ost || "") + " " + (key.ref_notes || "") + " " + (key.comment_ost || "") + " " + (key.comment_notes || "") + " " + issues.join(" ")).toLowerCase();
+              const stopWords = new Set(["the", "and", "this", "that", "there", "with", "from", "for", "are", "was", "were", "been", "have", "has", "had", "should", "must", "also", "into", "than", "then", "only", "present", "missing", "added", "video", "text"]);
+              const refWords = Array.from(new Set(refText.match(/[a-z0-9]{3,}/g) || [])).filter(w => !stopWords.has(w));
+
+              const userWords = userContent.match(/[a-z0-9]{3,}/g) || [];
+              const matchingWords = userWords.filter(w => refWords.includes(w));
+
+              if (userWords.length === 0 || matchingWords.length === 0) {
+                rowScore = 0;
+              } else {
+                const uniqueMatches = new Set(matchingWords).size;
+                const targetCount = Math.min(refWords.length, 3);
+                const ratio = uniqueMatches / Math.max(targetCount, 1);
+
+                if (ratio >= 0.75) rowScore = 6;
+                else if (ratio >= 0.5) rowScore = 4;
+                else if (ratio >= 0.25) rowScore = 2;
+                else rowScore = 0;
+              }
             }
           }
 
@@ -2933,7 +3004,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
               wfwText: rowObj.wfw.text,
               ostText: rowObj.ost.text,
               notesText: rowObj.notes.text,
-              comment: '',
+              comment: r.comment,
               ostImages: rowImages,
               score: r.score,
               max: r.max
