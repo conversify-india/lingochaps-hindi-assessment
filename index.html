@@ -1407,7 +1407,7 @@
         <div class="info-pill"><strong>⏱ 2 hrs 30 min</strong>Duration</div>
         <div class="info-pill"><strong>🌐 Hindi</strong>Language</div>
         <div class="info-pill"><strong>15 Segments</strong>Rows to Review</div>
-        <div class="info-pill"><strong>4 Columns</strong>Per Row</div>
+        <div class="info-pill"><strong>5 Columns</strong>Per Row</div>
       </div>
 
       <ul class="rules-list">
@@ -1524,6 +1524,7 @@
                 <th>✍️ WfW Translation</th>
                 <th>🖥 OST</th>
                 <th>📎 Notes</th>
+                <th>💬 Comments</th>
               </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -1974,6 +1975,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
           tr.appendChild(createGridCell(rIdx, 1, row.wfw));
           tr.appendChild(createGridCell(rIdx, 2, row.ost));
           tr.appendChild(createGridCell(rIdx, 3, row.notes));
+          tr.appendChild(createGridCell(rIdx, 4, row.comment));
 
           tbody.appendChild(tr);
         });
@@ -2120,6 +2122,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         if (cIdx === 1) td.classList.add('wfw-cell');
         else if (cIdx === 2) td.classList.add('ost-cell');
         else if (cIdx === 3) td.classList.add('notes-cell');
+        else if (cIdx === 4) td.classList.add('comment-cell');
 
         td.id = `cell_${rIdx}_${cIdx}`;
         td.onclick = (e) => handleCellClick(rIdx, cIdx, e);
@@ -2342,7 +2345,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         if (selectedCell) {
           let newRow = selectedCell.row + dRow;
           let newCol = selectedCell.col + dCol;
-          if (newRow >= 0 && newRow < 15 && newCol >= 0 && newCol < 4) {
+          if (newRow >= 0 && newRow < 15 && newCol >= 0 && newCol < 5) {
             selectedCell = { row: newRow, col: newCol };
             updateSelectionVisuals();
             const cell = document.getElementById(`cell_${newRow}_${newCol}`);
@@ -2358,6 +2361,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         if (col === 1) return rowObj.wfw;
         if (col === 2) return rowObj.ost;
         if (col === 3) return rowObj.notes;
+        if (col === 4) return rowObj.comment;
         return null;
       }
 
@@ -2388,7 +2392,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
       function updateProgress() {
         let count = 0;
         gridData.forEach((row, i) => {
-          const isEdited = (row.wfw.text !== WORK_DATA[i].wfw) || (row.ost.text && row.ost.text.trim() !== '') || (row.notes.text && row.notes.text.trim() !== '') || (row.ost.images && row.ost.images.length > 0);
+          const isEdited = (row.wfw.text !== WORK_DATA[i].wfw) || (row.ost.text && row.ost.text.trim() !== '') || (row.notes.text && row.notes.text.trim() !== '') || (row.comment.text && row.comment.text.trim() !== '') || (row.ost.images && row.ost.images.length > 0);
           if (isEdited) count++;
         });
         document.getElementById('progressFill').style.width = Math.round((count / 15) * 100) + '%';
@@ -2900,8 +2904,9 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
           const isWfwEdited = (data.wfw.text !== WORK_DATA[i].wfw);
           const ostTyped = (data.ost.text || "").trim();
           const notesTyped = (data.notes.text || "").trim();
+          const commentTyped = (data.comment.text || "").trim();
           const hasImages = (data.ost.images && data.ost.images.length > 0);
-          const isEdited = isWfwEdited || (ostTyped !== "") || (notesTyped !== "") || hasImages;
+          const isEdited = isWfwEdited || (ostTyped !== "") || (notesTyped !== "") || (commentTyped !== "") || hasImages;
 
           if (!isEdited) {
             rowScore = (issues.length === 0) ? 6 : 0;
@@ -2913,14 +2918,16 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
               return curWords.filter(w => !origWords.has(w)).join(" ");
             })();
 
-            const ostIsGib   = ostTyped   !== "" && isGibberish(ostTyped);
-            const notesIsGib = notesTyped !== "" && isGibberish(notesTyped);
-            const wfwIsGib   = wfwAddedRaw !== "" && isGibberish(wfwAddedRaw);
+            const ostIsGib     = ostTyped     !== "" && isGibberish(ostTyped);
+            const notesIsGib   = notesTyped   !== "" && isGibberish(notesTyped);
+            const commentIsGib = commentTyped !== "" && isGibberish(commentTyped);
+            const wfwIsGib     = wfwAddedRaw  !== "" && isGibberish(wfwAddedRaw);
 
             const allFieldsGibberish = (
-              (ostTyped   === "" || ostIsGib) &&
-              (notesTyped === "" || notesIsGib) &&
-              (wfwAddedRaw === "" || wfwIsGib) &&
+              (ostTyped     === "" || ostIsGib) &&
+              (notesTyped   === "" || notesIsGib) &&
+              (commentTyped === "" || commentIsGib) &&
+              (wfwAddedRaw  === "" || wfwIsGib) &&
               !hasImages
             );
 
@@ -2943,11 +2950,12 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
               ));
 
               // ── Candidate content (gibberish fields stripped) ─────────────
-              const cleanOst   = ostIsGib   ? "" : ostTyped;
-              const cleanNotes = notesIsGib ? "" : notesTyped;
-              const cleanWfw   = wfwIsGib   ? "" : wfwAddedRaw;
+              const cleanOst     = ostIsGib     ? "" : ostTyped;
+              const cleanNotes   = notesIsGib   ? "" : notesTyped;
+              const cleanComment = commentIsGib ? "" : commentTyped;
+              const cleanWfw     = wfwIsGib     ? "" : wfwAddedRaw;
 
-              const userContent = (cleanOst + " " + cleanNotes + " " + cleanWfw).toLowerCase().trim();
+              const userContent = (cleanOst + " " + cleanNotes + " " + cleanComment + " " + cleanWfw).toLowerCase().trim();
               const userTokens  = (userContent.match(/[a-z0-9]{3,}/g) || []).filter(w => !STOP_WORDS.has(w));
 
               if (userTokens.length === 0 && !hasImages) {
@@ -3050,6 +3058,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
               wfwText: rowObj.wfw.text,
               ostText: rowObj.ost.text,
               notesText: rowObj.notes.text,
+              candidateComment: rowObj.comment.text || '',
               comment: r.comment,
               ostImages: rowImages,
               score: r.score,

@@ -156,7 +156,7 @@ function writeToSheet(data) {
         row.wfwText || '',
         row.ostText || '',
         row.notesText || '',
-        row.comment || '(no comment)',
+        row.candidateComment || row.comment || '(no comment)',
         imageUrls.join(', '),
         row.score,
         row.max,
