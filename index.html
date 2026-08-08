@@ -365,7 +365,7 @@
 
     .col-legend {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px;
       margin-top: 14px;
     }
@@ -398,6 +398,12 @@
       background: #fffbeb;
       border: 1px solid #f59e0b;
       color: #b45309;
+    }
+
+    .col-pill.comments {
+      background: #fefdf0;
+      border: 1px solid #eab308;
+      color: #854d0e;
     }
 
     .col-pill strong {
@@ -1579,37 +1585,36 @@
             </a>
           </div>
 
-          <h3>📋 What you need to check</h3>
-          <ul class="instr-list">
+          <h3>📋 Instructions: How to Use the Platform</h3>
+          <ul class="instr-list" style="gap:15px;">
             <li>
               <div class="instr-num">1</div>
-              <div>Listen to each minute segment of the video carefully.</div>
+              <div><strong>WfW Translation (Column 1) — Read-Only:</strong> You cannot edit this text. Review it carefully against the video audio. To flag an error, highlight/select the specific word or phrase in the WfW text with your mouse, then click the yellow <strong>"💬 Comment on Selected Text"</strong> button in the Comments column to create an inline highlighted anchor linked to a comment card.</div>
             </li>
             <li>
               <div class="instr-num">2</div>
-              <div><strong>WfW (Word for Word):</strong> Compare every line with the audio. Correct any missing/wrong
-                words, or skipped lines.</div>
+              <div><strong>OST Subtitles & Overlays (Column 2):</strong> Capture all on-screen titles, subtitles, watermarks, or text overlays. Double-click or press Enter to type. Paste screenshots directly (Ctrl+V) or click <strong>"📷 Add Image"</strong>. Click <strong>"✏️ Edit"</strong> on any screenshot to draw annotations, draw shapes, or rotate it.</div>
             </li>
             <li>
               <div class="instr-num">3</div>
-              <div><strong>OST (On Screen Text):</strong> Check if all on-screen text visible in the video is captured
-                (add screenshots directly to OST).</div>
+              <div><strong>Notes & Reference links (Column 3):</strong> Add Wikipedia links and context for proper nouns, countries, clothing, or religious terms. Double-click to edit using formatting tools: Bold (B), Italic (I), Underline (U), Highlight (H), or Insert Hyperlink (🔗).</div>
             </li>
             <li>
               <div class="instr-num">4</div>
-              <div><strong>Notes:</strong> Verify and write appropriate reference notes for names and places.</div>
+              <div><strong>Word-style Comments (Column 5):</strong> View stacked comment cards corresponding to your WfW text highlights. Write comments specifically addressing those WfW highlights, or write a General row comment. Click the "×" on any card to delete the comment and remove the highlight. Hover/click cards to see highlight link indicators.</div>
             </li>
             <li>
               <div class="instr-num">5</div>
-              <div>Double-click or press Enter on any cell to edit it directly.</div>
+              <div><strong>Shortcuts & Navigation:</strong> Use <strong>Arrow keys / Tab / Shift+Tab</strong> to navigate. Press <strong>Enter</strong> to open the editor or save and move down. Press <strong>Shift+Enter</strong> to insert a line break. Press <strong>Esc</strong> to cancel changes.</div>
             </li>
           </ul>
 
           <div class="col-legend">
-            <div class="col-pill ts"><strong>Timestamp</strong>Time range (pre-filled)</div>
-            <div class="col-pill wfw"><strong>WfW Translation</strong>Word-for-word content</div>
-            <div class="col-pill ost"><strong>OST</strong>On-screen text</div>
-            <div class="col-pill notes"><strong>Notes</strong>Context / References</div>
+            <div class="col-pill ts"><strong>Timestamp</strong>Time range (read-only)</div>
+            <div class="col-pill wfw"><strong>WfW Translation</strong>Word-for-word audio (read-only)</div>
+            <div class="col-pill ost"><strong>OST</strong>On-screen text, images & drawings</div>
+            <div class="col-pill notes"><strong>Notes</strong>Rich text references & links</div>
+            <div class="col-pill comments"><strong>Comments</strong>Word-style inline commenting</div>
           </div>
         </div>
       </div>
@@ -2037,7 +2042,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
       // Google Sheets Grid State
       let gridData = WORK_DATA.map((row) => ({
         timestamp: row.timestamp,
-        wfw: { text: row.wfw, images: [] },
+        wfw: { text: formatWfWHtml(row.wfw), images: [] },
         ost: { text: row.ost || "", images: [] },
         notes: { text: row.notes || "", images: [] },
         comment: { text: "", images: [], items: [] }
@@ -2100,36 +2105,71 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         const selectedText = sel ? sel.toString().trim() : '';
 
         if (!selectedText) {
-          alert('Please select/highlight any text in WfW, OST, or Notes column first, then click "Comment on Selected Text".');
+          alert('Please select/highlight text specifically in the WfW Translation column (Col 1) first, then click "Comment on Selected Text".');
           return;
         }
 
-        let col = 1;
+        let isWfwSelection = false;
+        let range = null;
         if (sel.rangeCount > 0) {
-          const node = sel.getRangeAt(0).commonAncestorContainer;
+          range = sel.getRangeAt(0);
+          const node = range.commonAncestorContainer;
           const cellTd = node.nodeType === 1 ? node.closest('td') : (node.parentNode ? node.parentNode.closest('td') : null);
           if (cellTd && cellTd.id) {
             const parts = cellTd.id.split('_');
             if (parts.length >= 3) {
               const rowNum = parseInt(parts[1], 10);
               const colNum = parseInt(parts[2], 10);
-              if (rowNum === rIdx && (colNum >= 1 && colNum <= 3)) {
-                col = colNum;
+              if (rowNum === rIdx && colNum === 1) {
+                isWfwSelection = true;
               }
             }
           }
         }
 
+        if (!isWfwSelection || !range) {
+          alert('Please select/highlight text specifically inside the WfW Translation column (Col 1) to add a comment.');
+          return;
+        }
+
+        const col = 1;
         const commentData = gridData[rIdx].comment;
         if (!commentData.items) commentData.items = [];
         const badgeNum = commentData.items.length + 1;
         const commentId = `c_${rIdx}_${col}_${Date.now()}`;
 
-        const anchorHtml = `<mark class="comment-anchor" id="anchor_${commentId}" onclick="focusCommentCard(${rIdx}, '${commentId}')" onmouseenter="highlightCommentCard('${commentId}')" onmouseleave="unhighlightCommentCard('${commentId}')">${escHtml(selectedText)}<sup class="comment-badge">[${badgeNum}]</sup></mark>`;
+        // Create comment anchor element
+        const anchorEl = document.createElement('mark');
+        anchorEl.className = 'comment-anchor';
+        anchorEl.id = `anchor_${commentId}`;
+        anchorEl.onclick = (event) => {
+          event.stopPropagation();
+          focusCommentCard(rIdx, commentId);
+        };
+        anchorEl.onmouseenter = () => highlightCommentCard(commentId);
+        anchorEl.onmouseleave = () => unhighlightCommentCard(commentId);
 
         try {
-          document.execCommand('insertHTML', false, anchorHtml);
-        } catch (err) {}
+          range.surroundContents(anchorEl);
+          
+          // Append superscript badge
+          const badgeEl = document.createElement('sup');
+          badgeEl.className = 'comment-badge';
+          badgeEl.textContent = `[${badgeNum}]`;
+          anchorEl.appendChild(badgeEl);
+        } catch (err) {
+          alert('Could not create comment anchor on this selection. Please make sure the selected text does not overlap with existing highlights.');
+          return;
+        }
+
+        // Save updated HTML to gridData
+        const wfwTd = document.getElementById(`cell_${rIdx}_1`);
+        if (wfwTd) {
+          const displayEl = wfwTd.querySelector('.notes-content-display');
+          if (displayEl) {
+            gridData[rIdx].wfw.text = displayEl.innerHTML;
+          }
+        }
 
         commentData.items.push({
           id: commentId,
@@ -2402,6 +2442,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         td.id = `cell_${rIdx}_${cIdx}`;
         td.onclick = (e) => handleCellClick(rIdx, cIdx, e);
         td.ondblclick = (e) => {
+          if (cIdx === 0 || cIdx === 1) return; // WfW (Col 1) and Timestamp (Col 0) are read-only
           if (e.target.closest('a')) return;
           startEditing(rIdx, cIdx);
         };
@@ -2530,11 +2571,9 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
     `
           : '';
 
-        const displayVal = (cIdx === 3)
+        const displayVal = (cIdx === 3 || cIdx === 1)
           ? (cellData.text || '')
-          : (cIdx === 1)
-            ? formatWfWHtml(cellData.text)
-            : (cellData.text ? escHtml(cellData.text) : '');
+          : (cellData.text ? escHtml(cellData.text) : '');
 
         td.innerHTML = `
     <div class="cell-content-wrapper">
@@ -2562,7 +2601,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
       }
 
       function startEditing(row, col, initialChar = null) {
-        if (col === 0) return;
+        if (col === 0 || col === 1) return; // Column 0 (Timestamp) and Column 1 (WfW) are read-only!
         if (editingCell) saveEditing();
         editingCell = { row, col };
         const td = document.getElementById(`cell_${row}_${col}`);
