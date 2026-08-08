@@ -1,25 +1,40 @@
 /**
  * LINGOCHAPS — Hindi Audio Assessment Google Apps Script
+ * @OnlyCurrentDoc
  * ─────────────────────────────────────────────────────
  * SETUP INSTRUCTIONS:
- * 1. Go to https://script.google.com → New Project
- * 2. Paste this entire file → Save (Ctrl+S)
- * 3. Click "Deploy" → "New Deployment" → Type: Web App
- * 4. Execute as: Me | Who has access: Anyone
- * 5. Copy the Web App URL
- * 6. In index.html, replace YOUR_SCRIPT_ID_HERE with your deployment URL
+ * 1. Open target Google Sheet: https://docs.google.com/spreadsheets/d/1CHoywlaXCXO-o5FkPhwe0Zjl6igw0HRQxrao27fu7GE/edit
+ * 2. Click Extensions → Apps Script.
+ * 3. Delete existing code, paste this file → Save (Ctrl+S)
+ * 4. Click "Deploy" → "Manage deployments" → Edit → Version: "New version" → Deploy.
  * ─────────────────────────────────────────────────────
  */
 
-const SPREADSHEET_ID = ''; // Leave blank → auto-creates a new sheet
-                            // OR paste your Google Sheet ID here
+const SPREADSHEET_ID = '1CHoywlaXCXO-o5FkPhwe0Zjl6igw0HRQxrao27fu7GE';
 
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
+    let rawContents = "";
+    if (e && e.postData && e.postData.contents) {
+      rawContents = e.postData.contents;
+    } else if (e && e.parameter && Object.keys(e.parameter).length > 0) {
+      rawContents = JSON.stringify(e.parameter);
+    }
+
+    let data = {};
+    if (rawContents) {
+      try {
+        data = JSON.parse(rawContents);
+      } catch (parseErr) {
+        data = e.parameter || {};
+      }
+    } else if (e && e.parameter) {
+      data = e.parameter;
+    }
+
     writeToSheet(data);
     return ContentService
-      .createTextOutput(JSON.stringify({ status: 'ok' }))
+      .createTextOutput(JSON.stringify({ status: 'ok', success: true }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService
@@ -32,11 +47,23 @@ function doGet(e) {
   return ContentService.createTextOutput('LingoChaps Assessment Logger is running.');
 }
 
+function getSpreadsheet_() {
+  let ss = null;
+  try {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  } catch (e1) {}
+
+  if (!ss && SPREADSHEET_ID) {
+    try {
+      ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    } catch (e2) {}
+  }
+  return ss;
+}
+
 function writeToSheet(data) {
-  let ss;
-  if (SPREADSHEET_ID) {
-    ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  } else {
+  let ss = getSpreadsheet_();
+  if (!ss) {
     // Try to find existing sheet by name
     const files = DriveApp.getFilesByName('LingoChaps_Hindi_Assessment_Results');
     if (files.hasNext()) {

@@ -2830,17 +2830,65 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         let totalScore = 0;
         gridData.forEach((data, i) => {
           const key = ANSWER_KEY[i];
-          const issues = key.expected_issues;
+          const issues = key.expected_issues || [];
           let rowScore = 0;
 
-          const isEdited = (data.wfw.text !== WORK_DATA[i].wfw) || (data.ost.text && data.ost.text.trim() !== '') || (data.notes.text && data.notes.text.trim() !== '') || (data.ost.images && data.ost.images.length > 0);
+          const isEdited = (data.wfw.text !== WORK_DATA[i].wfw) ||
+            (data.ost.text && data.ost.text.trim() !== '') ||
+            (data.notes.text && data.notes.text.trim() !== '') ||
+            (data.ost.images && data.ost.images.length > 0);
 
-          if (!isEdited && issues.length > 0) rowScore = 0;
-          else if (!isEdited && issues.length === 0) rowScore = 6;
-          else rowScore = 6;
+          if (!isEdited) {
+            // If candidate didn't edit this row: full score if no issues were present, 0 if issues were present
+            rowScore = (issues.length === 0) ? 6 : 0;
+          } else {
+            // Candidate edited this row: evaluate if edits contain actual reference terms/keywords
+            const candidateText = ((data.wfw.text || "") + " " + (data.ost.text || "") + " " + (data.notes.text || "")).toLowerCase();
+            const refText = ((key.ref_ost || "") + " " + (key.ref_notes || "") + " " + (key.comment_ost || "") + " " + (key.comment_notes || "") + " " + issues.join(" ")).toLowerCase();
+
+            // Extract reference keywords (excluding common stop words)
+            const stopWords = new Set(["the", "and", "this", "that", "there", "with", "from", "for", "are", "was", "were", "been", "have", "has", "had", "should", "must", "also", "into", "than", "then", "only"]);
+            const refWords = Array.from(new Set(refText.match(/[a-z0-9]{3,}/g) || [])).filter(w => !stopWords.has(w));
+
+            if (refWords.length === 0) {
+              rowScore = 6;
+            } else {
+              // Count matching keywords in candidate response
+              let matches = 0;
+              refWords.forEach(w => {
+                if (candidateText.includes(w)) {
+                  matches++;
+                }
+              });
+
+              // Filter candidate words to ensure they aren't random gibberish (e.g. "werds", "asdf")
+              const cleanWords = candidateText.match(/[a-z0-9]+/g) || [];
+              const validWordCount = cleanWords.filter(w => refWords.includes(w)).length;
+
+              if (validWordCount === 0 || matches === 0) {
+                rowScore = 0; // Typing gibberish or unrelated text receives 0 points
+              } else {
+                const ratio = matches / Math.min(refWords.length, 4);
+                if (ratio >= 0.75) rowScore = 6;
+                else if (ratio >= 0.5) rowScore = 4;
+                else if (ratio >= 0.25) rowScore = 2;
+                else rowScore = 0;
+              }
+            }
+          }
 
           totalScore += rowScore;
-          results.push({ row: i, timestamp: data.timestamp, comment: isEdited ? "Edited" : "(no changes)", score: rowScore, max: 6, matched: [], missed: [], ref_ost: key.ref_ost, ref_notes: key.ref_notes });
+          results.push({
+            row: i,
+            timestamp: data.timestamp,
+            comment: isEdited ? (rowScore > 0 ? "Edited (Valid)" : "Edited (Incorrect/Gibberish)") : "(no changes)",
+            score: rowScore,
+            max: 6,
+            matched: [],
+            missed: [],
+            ref_ost: key.ref_ost,
+            ref_notes: key.ref_notes
+          });
         });
         return { results, totalScore, maxScore: 90 };
       }
@@ -2848,7 +2896,7 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
       // ─────────────────────────────────────────────
       // GOOGLE SHEETS
       // ─────────────────────────────────────────────
-      const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyl95kpoYBWRhXT3_UMgeVbVHm8SgFetUy2oMdxfqKrPfHW48inCtT_q9KdRm_YRu3LFA/exec';
+      const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzVR5z0RMXAo9N69uhhMF5THX8lkADT8Wt6fk6mIldg_hzYT7-DVXUyOmrI_31EI4cN/exec';
 
       function sendToSheet() {
         const d = window._scoreData;
