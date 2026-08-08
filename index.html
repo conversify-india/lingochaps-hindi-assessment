@@ -2834,32 +2834,24 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         if (!text || !text.trim()) return false;
         const t = text.trim();
 
-        // 1. High ratio of special / bracket characters  →  clearly not real content
         const specialCount = (t.match(/[\[\]{};:'"\\\/\|<>!@#$%^&*()+=~`]/g) || []).length;
         if (specialCount > 0 && specialCount / t.length >= 0.20) return true;
 
-        // 2. Bracket clusters of 2+ (e.g. [[ ]] ;[] ][)
         if (/[\[\]\{\}]{2,}/.test(t)) return true;
 
-        // 3. Extract alpha-only words and check for gibberish patterns
         const alphaWords = t.match(/[a-z]{3,}/gi) || [];
         if (alphaWords.length === 0 && t.replace(/\s/g, '').length > 3) {
-          // Non-empty content with no real words at all → gibberish
           return true;
         }
 
         let gibCount = 0;
         for (const w of alphaWords) {
           const wl = w.toLowerCase();
-          // 4+ consecutive consonants (keyboard mash: ghjkl, bbvght, dgrsfg…)
           if (/[bcdfghjklmnpqrstvwxyz]{5,}/.test(wl)) { gibCount++; continue; }
-          // Keyboard-row mash patterns
           if (/fghj|ghjk|hjkl|asdf|qwer|yuio|zxcv|vbnm|rtyu/.test(wl)) { gibCount++; continue; }
-          // Repeated-letter runs  (aaaa / eeerr)
           if (/(.)\1{3,}/.test(wl)) { gibCount++; continue; }
         }
 
-        // 5. Alphanumeric mix that looks like hash / random key  (e.g. eerrwt578, poi9u8u776…)
         const alphaNumWords = t.match(/[a-z0-9]{4,}/gi) || [];
         let alphaNumGib = 0;
         for (const w of alphaNumWords) {
@@ -2869,21 +2861,42 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
         }
         if (alphaNumWords.length > 0 && alphaNumGib / alphaNumWords.length >= 0.5) return true;
 
-        // If more than half of the alpha words look like gibberish → reject
         if (alphaWords.length > 0 && gibCount / alphaWords.length >= 0.5) return true;
 
+        return false;
+      }
+
+      // ─────────────────────────────────────────────
+      // TOKEN MATCHING HELPER
+      // Returns true if token `a` is relevantly related to token `b`.
+      // Uses exact match OR substring containment for tokens longer than 4 chars.
+      // e.g. "aNEWSGALLERYMEDIA" still matches "NEWSGALLERYMEDIA"
+      // ─────────────────────────────────────────────
+      function tokensMatch(a, b) {
+        if (a === b) return true;
+        if (a.length > 4 && b.length > 4 && (a.includes(b) || b.includes(a))) return true;
         return false;
       }
 
       function scoreTest() {
         const results = [];
         let totalScore = 0;
+
+        const STOP_WORDS = new Set([
+          "the","and","this","that","there","with","from","for","are","was","were","been",
+          "have","has","had","should","must","also","into","than","then","only","present",
+          "missing","added","video","text","https","http","www","org","wiki","wikipedia",
+          "not","but","its","one","two","all","any","can","will","may","been","just",
+          "more","some","most","about","after","before","during","over","under","same",
+          "each","very","well","both","few","like","does","did","our","out","off","now",
+          "new","how","see","she","they","them","their","when","here","which","who","what"
+        ]);
+
         gridData.forEach((data, i) => {
           const key = ANSWER_KEY[i];
           const issues = key.expected_issues || [];
           let rowScore = 0;
 
-          // Check if candidate actually edited anything in this row
           const isWfwEdited = (data.wfw.text !== WORK_DATA[i].wfw);
           const ostTyped = (data.ost.text || "").trim();
           const notesTyped = (data.notes.text || "").trim();
@@ -2891,11 +2904,8 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
           const isEdited = isWfwEdited || (ostTyped !== "") || (notesTyped !== "") || hasImages;
 
           if (!isEdited) {
-            // Unedited row: 0 points if issues were expected, 6 points if no issues expected
             rowScore = (issues.length === 0) ? 6 : 0;
           } else {
-            // ── Gibberish guard ──────────────────────────────────────
-            // If every user-typed field contains only gibberish, score 0 immediately.
             const wfwAddedRaw = (() => {
               if (!isWfwEdited) return "";
               const origWords = new Set((WORK_DATA[i].wfw || "").toLowerCase().match(/[a-z0-9]+/g) || []);
@@ -2907,7 +2917,6 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
             const notesIsGib = notesTyped !== "" && isGibberish(notesTyped);
             const wfwIsGib   = wfwAddedRaw !== "" && isGibberish(wfwAddedRaw);
 
-            // All non-empty fields are gibberish → 0
             const allFieldsGibberish = (
               (ostTyped   === "" || ostIsGib) &&
               (notesTyped === "" || notesIsGib) &&
@@ -2918,33 +2927,68 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
             if (allFieldsGibberish && !hasImages) {
               rowScore = 0;
             } else {
-              // ── Keyword matching ─────────────────────────────────────
-              // Only use non-gibberish portions for matching
+              // ── Build reference corpus from BOTH answer-sheet docs ────────
+              // ref_ost + ref_notes  → from the Reference doc
+              // comment_ost + comment_notes → from the Comments/marked doc
+              const refCorpus = [
+                key.ref_ost || "",
+                key.ref_notes || "",
+                key.comment_ost || "",
+                key.comment_notes || "",
+                issues.join(" ")
+              ].join(" ").toLowerCase();
+
+              const refTokens = Array.from(new Set(
+                (refCorpus.match(/[a-z0-9]{3,}/g) || []).filter(w => !STOP_WORDS.has(w))
+              ));
+
+              // ── Candidate content (gibberish fields stripped) ─────────────
               const cleanOst   = ostIsGib   ? "" : ostTyped;
               const cleanNotes = notesIsGib ? "" : notesTyped;
               const cleanWfw   = wfwIsGib   ? "" : wfwAddedRaw;
 
               const userContent = (cleanOst + " " + cleanNotes + " " + cleanWfw).toLowerCase().trim();
+              const userTokens  = (userContent.match(/[a-z0-9]{3,}/g) || []).filter(w => !STOP_WORDS.has(w));
 
-              // Extract target reference keywords
-              const refText = ((key.ref_ost || "") + " " + (key.ref_notes || "") + " " + (key.comment_ost || "") + " " + (key.comment_notes || "") + " " + issues.join(" ")).toLowerCase();
-              const stopWords = new Set(["the", "and", "this", "that", "there", "with", "from", "for", "are", "was", "were", "been", "have", "has", "had", "should", "must", "also", "into", "than", "then", "only", "present", "missing", "added", "video", "text"]);
-              const refWords = Array.from(new Set(refText.match(/[a-z0-9]{3,}/g) || [])).filter(w => !stopWords.has(w));
-
-              const userWords = userContent.match(/[a-z0-9]{3,}/g) || [];
-              const matchingWords = userWords.filter(w => refWords.includes(w));
-
-              if (userWords.length === 0 || matchingWords.length === 0) {
+              if (userTokens.length === 0 && !hasImages) {
                 rowScore = 0;
+              } else if (hasImages && userTokens.length === 0) {
+                rowScore = 2; // images only, no text — partial credit
               } else {
-                const uniqueMatches = new Set(matchingWords).size;
-                const targetCount = Math.min(refWords.length, 3);
-                const ratio = uniqueMatches / Math.max(targetCount, 1);
+                // ── PRECISION: how much of what the candidate typed is in the answer sheet? ──
+                // Uses tokensMatch for fuzzy/substring matching on tokens >4 chars
+                const userTokensInRef = userTokens.filter(ut =>
+                  refTokens.some(rt => tokensMatch(ut, rt))
+                );
+                const precision = userTokensInRef.length / Math.max(userTokens.length, 1);
 
-                if (ratio >= 0.75) rowScore = 6;
-                else if (ratio >= 0.5) rowScore = 4;
-                else if (ratio >= 0.25) rowScore = 2;
-                else rowScore = 0;
+                // ── RECALL: how much of the answer sheet did the candidate cover? ──
+                const refTokensCovered = refTokens.filter(rt =>
+                  userTokens.some(ut => tokensMatch(ut, rt))
+                );
+                const recallBase = Math.min(refTokens.length, 6); // cap at 6 key tokens
+                const recall = recallBase > 0
+                  ? Math.min(refTokensCovered.length, recallBase) / recallBase
+                  : 0;
+
+                // ── DECISION ─────────────────────────────────────────────────
+                // PRECISION GATE: if the candidate typed ≥3 meaningful tokens but
+                // fewer than 35% of them appear in the reference answer sheet →
+                // the answer is out of context → 0 points
+                if (precision < 0.35 && userTokens.length >= 3) {
+                  rowScore = 0;
+                } else if (recall >= 0.67) {
+                  rowScore = 6;
+                } else if (recall >= 0.45) {
+                  rowScore = 4;
+                } else if (recall >= 0.20) {
+                  rowScore = 2;
+                } else {
+                  rowScore = 0;
+                }
+
+                // If images were also uploaded and text partially matches → at least 2 pts
+                if (hasImages && rowScore === 0 && precision >= 0.20) rowScore = 2;
               }
             }
           }
@@ -2953,7 +2997,9 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
           results.push({
             row: i,
             timestamp: data.timestamp,
-            comment: isEdited ? (rowScore > 0 ? "Edited (Valid)" : "Edited (Incorrect/Gibberish)") : "(no changes)",
+            comment: isEdited
+              ? (rowScore > 0 ? "Edited (Valid)" : "Edited (Incorrect / Out-of-context)")
+              : "(no changes)",
             score: rowScore,
             max: 6,
             matched: [],
