@@ -2833,47 +2833,48 @@ Nazia Elahi Khan: [00:07:35 *unintelligible word] sir did not allow me to offer 
           const issues = key.expected_issues || [];
           let rowScore = 0;
 
-          const isEdited = (data.wfw.text !== WORK_DATA[i].wfw) ||
-            (data.ost.text && data.ost.text.trim() !== '') ||
-            (data.notes.text && data.notes.text.trim() !== '') ||
-            (data.ost.images && data.ost.images.length > 0);
+          // Check if candidate actually edited anything in this row
+          const isWfwEdited = (data.wfw.text !== WORK_DATA[i].wfw);
+          const ostTyped = (data.ost.text || "").trim();
+          const notesTyped = (data.notes.text || "").trim();
+          const hasImages = (data.ost.images && data.ost.images.length > 0);
+          const isEdited = isWfwEdited || (ostTyped !== "") || (notesTyped !== "") || hasImages;
 
           if (!isEdited) {
-            // If candidate didn't edit this row: full score if no issues were present, 0 if issues were present
+            // Unedited row: 0 points if issues were expected, 6 points if no issues expected
             rowScore = (issues.length === 0) ? 6 : 0;
           } else {
-            // Candidate edited this row: evaluate if edits contain actual reference terms/keywords
-            const candidateText = ((data.wfw.text || "") + " " + (data.ost.text || "") + " " + (data.notes.text || "")).toLowerCase();
-            const refText = ((key.ref_ost || "") + " " + (key.ref_notes || "") + " " + (key.comment_ost || "") + " " + (key.comment_notes || "") + " " + issues.join(" ")).toLowerCase();
+            // Candidate edited this row. Evaluate ONLY candidate's typed text & additions (ostTyped + notesTyped + wfwDiff), excluding pre-filled WORK_DATA
+            let wfwDiff = "";
+            if (isWfwEdited) {
+              const origWords = new Set((WORK_DATA[i].wfw || "").toLowerCase().match(/[a-z0-9]+/g) || []);
+              const currentWords = (data.wfw.text || "").toLowerCase().match(/[a-z0-9]+/g) || [];
+              const addedWords = currentWords.filter(w => !origWords.has(w));
+              wfwDiff = addedWords.join(" ");
+            }
 
-            // Extract reference keywords (excluding common stop words)
-            const stopWords = new Set(["the", "and", "this", "that", "there", "with", "from", "for", "are", "was", "were", "been", "have", "has", "had", "should", "must", "also", "into", "than", "then", "only"]);
+            const userContent = (ostTyped + " " + notesTyped + " " + wfwDiff).toLowerCase().trim();
+
+            // Extract target reference keywords from ref_ost, ref_notes, comment_ost, comment_notes, expected_issues
+            const refText = ((key.ref_ost || "") + " " + (key.ref_notes || "") + " " + (key.comment_ost || "") + " " + (key.comment_notes || "") + " " + issues.join(" ")).toLowerCase();
+            const stopWords = new Set(["the", "and", "this", "that", "there", "with", "from", "for", "are", "was", "were", "been", "have", "has", "had", "should", "must", "also", "into", "than", "then", "only", "present", "missing", "added", "video", "text"]);
             const refWords = Array.from(new Set(refText.match(/[a-z0-9]{3,}/g) || [])).filter(w => !stopWords.has(w));
 
-            if (refWords.length === 0) {
-              rowScore = 6;
+            const userWords = userContent.match(/[a-z0-9]{3,}/g) || [];
+            const matchingWords = userWords.filter(w => refWords.includes(w));
+
+            if (userWords.length === 0 || matchingWords.length === 0) {
+              // Candidate typed gibberish or nonsense (e.g. "weird", "asdf", "werds") -> 0 points
+              rowScore = 0;
             } else {
-              // Count matching keywords in candidate response
-              let matches = 0;
-              refWords.forEach(w => {
-                if (candidateText.includes(w)) {
-                  matches++;
-                }
-              });
+              const uniqueMatches = new Set(matchingWords).size;
+              const targetCount = Math.min(refWords.length, 3);
+              const ratio = uniqueMatches / Math.max(targetCount, 1);
 
-              // Filter candidate words to ensure they aren't random gibberish (e.g. "werds", "asdf")
-              const cleanWords = candidateText.match(/[a-z0-9]+/g) || [];
-              const validWordCount = cleanWords.filter(w => refWords.includes(w)).length;
-
-              if (validWordCount === 0 || matches === 0) {
-                rowScore = 0; // Typing gibberish or unrelated text receives 0 points
-              } else {
-                const ratio = matches / Math.min(refWords.length, 4);
-                if (ratio >= 0.75) rowScore = 6;
-                else if (ratio >= 0.5) rowScore = 4;
-                else if (ratio >= 0.25) rowScore = 2;
-                else rowScore = 0;
-              }
+              if (ratio >= 0.75) rowScore = 6;
+              else if (ratio >= 0.5) rowScore = 4;
+              else if (ratio >= 0.25) rowScore = 2;
+              else rowScore = 0;
             }
           }
 
